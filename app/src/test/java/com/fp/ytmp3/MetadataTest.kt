@@ -85,6 +85,43 @@ class MetadataTest {
     }
 
     @Test
+    fun itunesPrefersStudioAlbumOverCompilationForCover() {
+        val json = """
+            {"results":[
+              {"artistName":"Ben Harper","trackName":"Jah Work",
+               "collectionName":"The Best of Ben Harper","releaseDate":"2000-01-01T12:00:00Z",
+               "artworkUrl100":"https://example/bestof/100x100bb.jpg"},
+              {"artistName":"Ben Harper","trackName":"Jah Work",
+               "collectionName":"The Will to Live","releaseDate":"1997-01-01T12:00:00Z",
+               "artworkUrl100":"https://example/studio/100x100bb.jpg"}
+            ]}
+        """
+        val meta = MusicBrainz.parseItunes(json, "Ben Harper Jah work", "noliv008")
+        assertEquals("The Will to Live", meta?.album)
+        assertTrue(meta?.coverUrl?.contains("studio") == true)
+    }
+
+    @Test
+    fun itunesPrefersAlbumOverSingleAndCompilation() {
+        val json = """
+            {"results":[
+              {"artistName":"The Supermen Lovers","trackName":"Starlight",
+               "collectionName":"Hits 50","releaseDate":"2001-09-16T12:00:00Z",
+               "artworkUrl100":"https://example/hits/100x100bb.jpg"},
+              {"artistName":"The Supermen Lovers","trackName":"Starlight",
+               "collectionName":"Starlight - EP","releaseDate":"2001-09-03T12:00:00Z",
+               "artworkUrl100":"https://example/ep/100x100bb.jpg"},
+              {"artistName":"The Supermen Lovers","trackName":"Starlight",
+               "collectionName":"The Player","releaseDate":"2002-03-01T12:00:00Z",
+               "artworkUrl100":"https://example/player/100x100bb.jpg"}
+            ]}
+        """
+        val meta = MusicBrainz.parseItunes(json, "The Supermen Lovers Starlight", "The Supermen Lovers")
+        assertEquals("The Player", meta?.album)
+        assertTrue(meta?.coverUrl?.contains("player") == true)
+    }
+
+    @Test
     fun matchingRejectsUnknownArtist() {
         assertFalse(MusicBrainz.matches("Me at the zoo", "jawed", "Some Artist", "Me at the Zoo"))
         assertTrue(MusicBrainz.matches("Me at the zoo", "jawed", "jawed", "Me at the Zoo"))

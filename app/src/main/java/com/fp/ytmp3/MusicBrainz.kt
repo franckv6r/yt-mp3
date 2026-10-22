@@ -18,6 +18,12 @@ data class Meta(
     val matched: Boolean = false
 )
 
+data class Enriched(
+    val meta: Meta,
+    val cover: Pair<ByteArray, String>?,
+    val lyrics: String?
+)
+
 /**
  * Resolution des metadonnees :
  *  1. MusicBrainz (base ouverte, 1 requete/seconde)
@@ -56,6 +62,14 @@ object MusicBrainz {
         "Soundtrack"
     )
 
+    private val COMPILATION = Regex(
+        """(?i)\b(best of|greatest hits|compilation|anthology|essential|collection|hits|soundtrack|ost|definitive)\b"""
+    )
+
+    private val EDITION = Regex(
+        """(?i)\b(ep|single|remix|remixes|instrumental|radio edit|version)\b"""
+    )
+
     // ---------------------------------------------------------------- lookup
 
     fun lookup(
@@ -72,14 +86,25 @@ object MusicBrainz {
 
         val mb = musicBrainz(raw, channel, shouldStop)
         if (mb != null) {
-            if (mb.year == null || mb.album == null || mb.rgid == null) {
+            val mbCompilation = compilationPenalty(mb.album) > 0
+            if (mb.year == null || mb.album == null || mb.rgid == null || mbCompilation) {
                 checkStop(shouldStop)
                 val extra = itunes(raw, channel, shouldStop) ?: deezer(raw, channel, shouldStop)
                 if (extra != null) {
+                    // Une compile MusicBrainz ne doit pas bloquer une vraie
+                    // sortie studio trouvee chez un catalogue.
+                    val useExtraAlbum = extra.album != null &&
+                            (mb.album == null ||
+                                    (mbCompilation && compilationPenalty(extra.album) == 0.0))
                     val merged = mb.copy(
                         year = mb.year ?: extra.year,
-                        album = mb.album ?: extra.album,
-                        coverUrl = mb.coverUrl ?: extra.coverUrl
+                        album = if (useExtraAlbum) extra.album else mb.album ?: extra.album,
+                        rgid = if (useExtraAlbum && extra.album != mb.album) null else mb.rgid,
+                        coverUrl = if (useExtraAlbum) {
+                            extra.coverUrl ?: mb.coverUrl
+                        } else {
+                            mb.coverUrl ?: extra.coverUrl
+                        }
                     )
                     cachePut(ctx, raw, channel, merged)
                     return merged
@@ -94,6 +119,45 @@ object MusicBrainz {
         deezer(raw, channel, shouldStop)?.let { cachePut(ctx, raw, channel, it); return it }
 
         return fallback(raw, uploader, uploadYear)
+    }
+
+    /**
+     * Meme chaine metadonnees -> pochette -> paroles pour le telechargement
+     * YouTube et pour l'analyse d'un dossier. Le nom de fichier peut fournir
+     * un indice, mais on retombe sur les tags s'il ne matche pas.
+     */
+    fun resolve(
+        ctx: Context,
+        title: String,
+        artist: String,
+        year: Int?,
+        duration: Long?,
+        withCover: Boolean,
+        withLyrics: Boolean,
+        nameArtist: String? = null,
+        nameTitle: String? = null,
+        shouldStop: () -> Boolean = { false }
+    ): Enriched {
+        val hintArtist = nameArtist?.trim()?.takeIf {
+            it.isNotBlank() && !it.equals(artist, ignoreCase = true)
+        }
+        val hintTitle = nameTitle?.trim()?.takeIf {
+            it.isNotBlank() && !it.equals(title, ignoreCase = true)
+        }
+        var meta = lookup(
+            ctx, hintTitle ?: title, hintArtist ?: artist, year, shouldStop
+        )
+        if (!meta.matched && (hintArtist != null || hintTitle != null)) {
+            checkStop(shouldStop)
+            meta = lookup(ctx, title, artist, year, shouldStop)
+        }
+        checkStop(shouldStop)
+        val cover = if (withCover) cover(meta, shouldStop) else null
+        checkStop(shouldStop)
+        val text = if (withLyrics) {
+            lyrics(meta.artist, meta.title, meta.album, duration, shouldStop)
+        } else null
+        return Enriched(meta, cover, text)
     }
 
     // ----------------------------------------------------------- MusicBrainz
@@ -265,14 +329,16 @@ object MusicBrainz {
             val title = o.optString("trackName")
             if (artist.isBlank() || title.isBlank()) continue
             if (!matches(raw, channel, artist, title)) continue
-            val score = matchScore(raw, channel, artist, title)
+            val album = o.optString("collectionName").ifBlank { null }
+            val score = matchScore(raw, channel, artist, title) -
+                    compilationPenalty(album) - editionPenalty(album)
             if (score <= bestScore) continue
             bestScore = score
             best = Meta(
                 artist = artist,
                 title = title,
                 year = o.optString("releaseDate").take(4).toIntOrNull(),
-                album = o.optString("collectionName").ifBlank { null },
+                album = album,
                 rgid = null,
                 coverUrl = artwork(o.optString("artworkUrl100")),
                 matched = true
@@ -289,6 +355,12 @@ object MusicBrainz {
             lastItunes = System.currentTimeMillis()
         }
     }
+
+    private fun compilationPenalty(album: String?): Double =
+        if (album != null && COMPILATION.containsMatchIn(album)) 0.08 else 0.0
+
+    private fun editionPenalty(album: String?): Double =
+        if (album != null && EDITION.containsMatchIn(album)) 0.04 else 0.0
 
     private fun artwork(url: String): String? {
         if (url.isBlank()) return null
@@ -344,16 +416,18 @@ object MusicBrainz {
             val title = o.optString("title")
             if (artist.isBlank() || title.isBlank()) continue
             if (!matches(raw, channel, artist, title)) continue
-            val score = matchScore(raw, channel, artist, title)
-            if (score <= bestScore) continue
             val album = o.optJSONObject("album")
+            val albumTitle = album?.optString("title")?.ifBlank { null }
+            val score = matchScore(raw, channel, artist, title) -
+                    compilationPenalty(albumTitle) - editionPenalty(albumTitle)
+            if (score <= bestScore) continue
             bestScore = score
             best = Dz(
                 Meta(
                     artist = artist,
                     title = title,
                     year = null,
-                    album = album?.optString("title")?.ifBlank { null },
+                    album = albumTitle,
                     rgid = null,
                     coverUrl = album?.optString("cover_xl")?.ifBlank { null },
                     matched = true
@@ -630,7 +704,7 @@ object MusicBrainz {
 
     private fun cacheKey(raw: String, channel: String): String {
         // Changer la version invalide les anciennes reponses (ex. une compile).
-        val src = "v3|" + rawTokens(raw).sorted().joinToString(" ") + "|" +
+        val src = "v4|" + rawTokens(raw).sorted().joinToString(" ") + "|" +
                 tokens(channel).ifEmpty { tokens(channel, filterNoise = false) }
                     .sorted().joinToString(" ")
         val md = MessageDigest.getInstance("SHA-1")

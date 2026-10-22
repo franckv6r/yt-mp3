@@ -97,3 +97,17 @@
 - Fix : `startItemProgress()` passe la barre en mode indetermine au debut de chaque fichier (telechargement et pochettes/paroles), puis `updateStats()` reprend la progression determinee a la fin du fichier ; remise a zero dans les `finally`.
 - Non-regression : capture pendant un telechargement : segment bleu anime visible sous la carte Progression, a cote du bouton Arreter ; build + 23 tests.
 - Occurrences : 1.
+
+## 2026-10-22 — Pochette : eviter les compilations + jobs metadata communs
+- Symptôme : la pochette pouvait venir d'une compilation ; le telechargement YouTube et l'analyse dossier avaient deux implementations proches, avec des resultats differents (Ben Harper « Jah Work » : pochette manquante apres telechargement, trouvee depuis le dossier).
+- Cause racine : duplication `lookup -> cover -> lyrics` dans `downloadOne` et `fetchArt` ; le choix iTunes/Deezer ne penalisait pas les albums de compilation.
+- Fix : `MusicBrainz.resolve()` commun (memes indices nom de fichier, meme lookup, meme pochette, memes paroles) utilise par les deux jobs ; penalite de 0,08 pour les compilations dans iTunes/Deezer ; `BAD_SECONDARY` exclut deja Compilation/Live/Soundtrack.
+- Non-regression : test `itunesPrefersStudioAlbumOverCompilationForCover` ; build + 24 tests. Le chemin dossier reutilise exactement le meme resolve que le telechargement.
+- Occurrences : 1.
+
+## 2026-10-22 — Pochette « Hits 50 » (The Supermen Lovers — Starlight)
+- Symptôme : pochette d'une compilation (`Hits 50`) au lieu de l'album studio `The Player`.
+- Cause racine : MusicBrainz ne proposait qu'une sortie compilation pour cette prise et le resultat etait mis en cache ; le lookup ne consultait pas iTunes/Deezer quand l'album MusicBrainz etait une compilation.
+- Fix : detection compilation au niveau **album** (types secondaires MusicBrainz + mots d'album), penalite EP/single/remix, et si MusicBrainz renvoie une compilation, iTunes/Deezer est consulte et une sortie studio remplace l'album ; cache v4.
+- Non-regression : tests `itunesPrefersStudioAlbumOverCompilationForCover`, `itunesPrefersAlbumOverSingleAndCompilation` ; 25 tests, build OK.
+- Occurrences : 1.

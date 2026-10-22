@@ -870,35 +870,19 @@ class MainActivity : AppCompatActivity() {
                         val hintArtist = fileParts?.second?.takeIf {
                             it.isNotBlank() && !it.equals(local.artist, ignoreCase = true)
                         }
-                        val hintTitle = fileParts?.third?.takeIf {
-                            it.isNotBlank() && !it.equals(local.title, ignoreCase = true)
-                        }
-                        var meta = withContext(Dispatchers.IO) {
-                            MusicBrainz.lookup(
-                                this@MainActivity,
-                                hintTitle ?: local.title,
-                                hintArtist ?: local.artist,
-                                local.year
+                        val hintTitle = fileParts?.third
+                        val enriched = withContext(Dispatchers.IO) {
+                            MusicBrainz.resolve(
+                                this@MainActivity, local.title, local.artist,
+                                local.year, local.duration, covers, lyrics,
+                                nameArtist = hintArtist, nameTitle = hintTitle
                             ) { stopRequested }
                         }
-                        if (!meta.matched && (hintArtist != null || hintTitle != null)) {
-                            // L'indice du nom peut etre mauvais : on retente avec les tags.
-                            meta = withContext(Dispatchers.IO) {
-                                MusicBrainz.lookup(
-                                    this@MainActivity, local.title, local.artist, local.year
-                                ) { stopRequested }
-                            }
-                        }
+                        val meta = enriched.meta
+                        val cover = enriched.cover
+                        val text = enriched.lyrics
                         if (covers) log("  ${item.name} : pochette")
-                        val cover = if (covers) withContext(Dispatchers.IO) {
-                            MusicBrainz.cover(meta) { stopRequested }
-                        } else null
                         if (lyrics) log("  ${item.name} : paroles")
-                        val text = if (lyrics) withContext(Dispatchers.IO) {
-                            MusicBrainz.lyrics(meta.artist, meta.title, meta.album, local.duration) {
-                                stopRequested
-                            }
-                        } else null
 
                         val newSegments = if (meta.matched) {
                             RenamePattern.render(Config.renamePattern(prefs), meta)
@@ -1051,17 +1035,17 @@ class MainActivity : AppCompatActivity() {
             this@MainActivity, getString(R.string.notif_download),
             getString(R.string.notif_tagging) + " · " + title, -1, true
         )
-        val meta = withContext(Dispatchers.IO) {
-            MusicBrainz.lookup(this@MainActivity, title, uploader, uploadYear) { stopRequested }
-        }
-        val cover = withContext(Dispatchers.IO) { MusicBrainz.cover(meta) { stopRequested } }
-        val lyrics = withContext(Dispatchers.IO) {
-            MusicBrainz.lyrics(meta.artist, meta.title, meta.album, duration) { stopRequested }
-        }
         log("  " + getString(R.string.log_tags_step))
+        val enriched = withContext(Dispatchers.IO) {
+            MusicBrainz.resolve(
+                this@MainActivity, title, uploader, uploadYear, duration,
+                withCover = true, withLyrics = true
+            ) { stopRequested }
+        }
+        val meta = enriched.meta
         val where = withContext(Dispatchers.IO) {
             Tagger.tagAndSave(
-                this@MainActivity, mp3, meta, cover, lyrics, destUri,
+                this@MainActivity, mp3, meta, enriched.cover, enriched.lyrics, destUri,
                 Config.renamePattern(prefs)
             )
         }
