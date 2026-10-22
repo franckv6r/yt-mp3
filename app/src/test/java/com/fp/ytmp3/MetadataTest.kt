@@ -109,9 +109,12 @@ class MetadataTest {
                "collectionName":"Hits 50","releaseDate":"2001-09-16T12:00:00Z",
                "artworkUrl100":"https://example/hits/100x100bb.jpg"},
               {"artistName":"The Supermen Lovers","trackName":"Starlight",
+               "collectionName":"Starlight","releaseDate":"2001-09-03T12:00:00Z",
+               "artworkUrl100":"https://example/single/100x100bb.jpg"},
+              {"artistName":"The Supermen Lovers","trackName":"Starlight",
                "collectionName":"Starlight - EP","releaseDate":"2001-09-03T12:00:00Z",
                "artworkUrl100":"https://example/ep/100x100bb.jpg"},
-              {"artistName":"The Supermen Lovers","trackName":"Starlight",
+              {"artistName":"The Supermen Lovers & Mani Hoffman","trackName":"Starlight",
                "collectionName":"The Player","releaseDate":"2002-03-01T12:00:00Z",
                "artworkUrl100":"https://example/player/100x100bb.jpg"}
             ]}
@@ -119,6 +122,31 @@ class MetadataTest {
         val meta = MusicBrainz.parseItunes(json, "The Supermen Lovers Starlight", "The Supermen Lovers")
         assertEquals("The Player", meta?.album)
         assertTrue(meta?.coverUrl?.contains("player") == true)
+    }
+
+    @Test
+    fun collaboratorInCatalogStillMatchesMainChannel() {
+        assertTrue(
+            MusicBrainz.matches(
+                "Starlight", "The Supermen Lovers",
+                "The Supermen Lovers & Mani Hoffman", "Starlight"
+            )
+        )
+        assertFalse(
+            MusicBrainz.matches(
+                "Starlight", "Muse",
+                "The Supermen Lovers & Mani Hoffman", "Starlight"
+            )
+        )
+    }
+
+    @Test
+    fun nonLatinArtistDoesNotMatchWesternChannel() {
+        assertFalse(
+            MusicBrainz.matches(
+                "Starlight", "The Supermen Lovers", "찬희", "Starlight"
+            )
+        )
     }
 
     @Test

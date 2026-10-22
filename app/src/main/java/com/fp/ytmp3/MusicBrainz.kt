@@ -87,7 +87,13 @@ object MusicBrainz {
         val mb = musicBrainz(raw, channel, shouldStop)
         if (mb != null) {
             val mbCompilation = compilationPenalty(mb.album) > 0
-            if (mb.year == null || mb.album == null || mb.rgid == null || mbCompilation) {
+            // Une sortie single/EP (souvent au nom du morceau) n'est pas
+            // l'album studio : on demande un meilleur album aux catalogues.
+            val mbSingle = editionPenalty(mb.album) > 0 ||
+                    (mb.album != null && mb.album.equals(mb.title, ignoreCase = true))
+            if (mb.year == null || mb.album == null || mb.rgid == null ||
+                mbCompilation || mbSingle
+            ) {
                 checkStop(shouldStop)
                 val extra = itunes(raw, channel, shouldStop) ?: deezer(raw, channel, shouldStop)
                 if (extra != null) {
@@ -95,7 +101,9 @@ object MusicBrainz {
                     // sortie studio trouvee chez un catalogue.
                     val useExtraAlbum = extra.album != null &&
                             (mb.album == null ||
-                                    (mbCompilation && compilationPenalty(extra.album) == 0.0))
+                                    ((mbCompilation || mbSingle) &&
+                                            compilationPenalty(extra.album) == 0.0 &&
+                                            editionPenalty(extra.album) == 0.0))
                     val merged = mb.copy(
                         year = mb.year ?: extra.year,
                         album = if (useExtraAlbum) extra.album else mb.album ?: extra.album,
@@ -331,7 +339,8 @@ object MusicBrainz {
             if (!matches(raw, channel, artist, title)) continue
             val album = o.optString("collectionName").ifBlank { null }
             val score = matchScore(raw, channel, artist, title) -
-                    compilationPenalty(album) - editionPenalty(album)
+                    compilationPenalty(album) - editionPenalty(album) -
+                    singlePenalty(album, title)
             if (score <= bestScore) continue
             bestScore = score
             best = Meta(
@@ -361,6 +370,9 @@ object MusicBrainz {
 
     private fun editionPenalty(album: String?): Double =
         if (album != null && EDITION.containsMatchIn(album)) 0.04 else 0.0
+
+    private fun singlePenalty(album: String?, title: String): Double =
+        if (album != null && album.equals(title, ignoreCase = true)) 0.04 else 0.0
 
     private fun artwork(url: String): String? {
         if (url.isBlank()) return null
@@ -419,7 +431,8 @@ object MusicBrainz {
             val album = o.optJSONObject("album")
             val albumTitle = album?.optString("title")?.ifBlank { null }
             val score = matchScore(raw, channel, artist, title) -
-                    compilationPenalty(albumTitle) - editionPenalty(albumTitle)
+                    compilationPenalty(albumTitle) - editionPenalty(albumTitle) -
+                    singlePenalty(albumTitle, title)
             if (score <= bestScore) continue
             bestScore = score
             best = Dz(
@@ -457,13 +470,15 @@ object MusicBrainz {
         val rt = rawTokens(raw)
         val at = tokens(artist, filterNoise = false)
         val tt = tokens(title, filterNoise = false)
-        if (rt.isEmpty() || tt.isEmpty()) return false
+        if (rt.isEmpty() || tt.isEmpty() || at.isEmpty()) return false
         val titleCov = overlap(tt, rt).toDouble() / tt.size
         if (titleCov < 0.74) return false
-        val all = at + tt
+        val channelTokens = tokens(channel)
+        val mainArtist = channelTokens.isNotEmpty() && at.containsAll(channelTokens)
+        val all = if (mainArtist) channelTokens + tt else at + tt
         val allCov = overlap(all, rt).toDouble() / all.size
         val artistInRaw = at.isNotEmpty() && rt.containsAll(at)
-        val artistInChannel = inChannel(at, channel)
+        val artistInChannel = inChannel(at, channel) || mainArtist
         // Un suffixe de catalogue ("(Live)", "Remastered") ne doit pas faire
         // echouer un titre dont l'artiste est deja confirme.
         return allCov >= 0.999 || (titleCov >= 0.82 && (artistInRaw || artistInChannel))
@@ -473,11 +488,14 @@ object MusicBrainz {
         val rt = rawTokens(raw)
         val at = tokens(artist, filterNoise = false)
         val tt = tokens(title, filterNoise = false)
-        if (rt.isEmpty() || tt.isEmpty()) return 0.0
+        if (rt.isEmpty() || tt.isEmpty() || at.isEmpty()) return 0.0
         val titleCov = overlap(tt, rt).toDouble() / tt.size
-        val all = at + tt
+        val channelTokens = tokens(channel)
+        val mainArtist = channelTokens.isNotEmpty() && at.containsAll(channelTokens)
+        val all = if (mainArtist) channelTokens + tt else at + tt
         val allCov = overlap(all, rt).toDouble() / all.size
-        val artistOk = (at.isNotEmpty() && rt.containsAll(at)) || inChannel(at, channel)
+        val artistOk = (at.isNotEmpty() && rt.containsAll(at)) ||
+                inChannel(at, channel) || mainArtist
         return 0.6 * titleCov + 0.3 * allCov + (if (artistOk) 0.1 else 0.0)
     }
 
@@ -704,7 +722,7 @@ object MusicBrainz {
 
     private fun cacheKey(raw: String, channel: String): String {
         // Changer la version invalide les anciennes reponses (ex. une compile).
-        val src = "v4|" + rawTokens(raw).sorted().joinToString(" ") + "|" +
+        val src = "v9|" + rawTokens(raw).sorted().joinToString(" ") + "|" +
                 tokens(channel).ifEmpty { tokens(channel, filterNoise = false) }
                     .sorted().joinToString(" ")
         val md = MessageDigest.getInstance("SHA-1")
