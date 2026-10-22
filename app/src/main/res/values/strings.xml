@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">yt-mp3</string>
+
+    <string name="menu_journal">Journal</string>
+    <string name="menu_settings">Settings</string>
+
+    <string name="journal_title">Journal</string>
+    <string name="journal_clear">Clear log</string>
+    <string name="journal_empty">No activity yet.</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_save">Save</string>
+    <string name="settings_reset">Reset (app defaults)</string>
+    <string name="settings_saved">Settings saved</string>
+    <string name="settings_reset_done">App defaults restored</string>
+
+    <string name="main_link">YOUTUBE LINK</string>
+    <string name="main_url_hint">Video or playlist</string>
+    <string name="main_analyze_playlist">Analyze playlist</string>
+    <string name="main_destination">DESTINATION</string>
+    <string name="main_default_dest">Default: Music/yt-mp3</string>
+    <string name="main_choose">Choose</string>
+    <string name="main_analyze_folder">Analyze folder</string>
+    <string name="main_tracks">TRACKS</string>
+    <string name="main_check_all">Check all</string>
+    <string name="main_uncheck_all">Uncheck all</string>
+    <string name="main_download_zero">Download MP3 (0)</string>
+    <string name="main_download_fmt">Download MP3 (%1$d)</string>
+    <string name="main_stop">Stop</string>
+    <string name="main_progress">PROGRESS</string>
+    <string name="main_ready">Ready</string>
+    <string name="main_ready_hint">Paste a link, then start</string>
+    <string name="main_present">PRESENT</string>
+    <string name="main_added">ADDED</string>
+    <string name="main_errors">ERRORS</string>
+    <string name="main_files">FILES</string>
+    <string name="main_updated">UPDATED</string>
+    <string name="main_count_fmt">%1$d / %2$d</string>
+    <string name="main_folder_files">FOLDER FILES</string>
+    <string name="main_recursive">Include subfolders</string>
+    <string name="main_art_covers">Download covers</string>
+    <string name="main_art_lyrics">Download lyrics</string>
+    <string name="main_art_both">Covers + lyrics</string>
+    <string name="main_art_covers_short">Covers</string>
+    <string name="main_art_lyrics_short">Lyrics</string>
+    <string name="main_art_both_short">Covers + lyrics</string>
+    <string name="main_update_extractor">Update extractor</string>
+    <string name="main_check_updates">Check for updates</string>
+    <string name="main_dest_folder_fmt">Folder: %1$s</string>
+
+    <string name="status_present">already present</string>
+    <string name="status_to_download">to download</string>
+
+    <string name="main_analyzing">Analyzing</string>
+    <string name="main_reading_playlist">Reading playlist…</string>
+    <string name="main_reading_folder">Reading folder…</string>
+    <string name="main_folder">Folder</string>
+    <string name="main_folder_hint">Check files, then choose covers and/or lyrics</string>
+    <string name="main_folder_count_fmt">%1$d audio file(s)</string>
+    <string name="main_stop_requested">Stop requested…</string>
+    <string name="main_stopped">Stopped</string>
+    <string name="main_done">Done</string>
+    <string name="main_error">Error</string>
+    <string name="main_url_empty">Empty URL</string>
+    <string name="main_storage">Allow storage, then start again</string>
+    <string name="main_done_fmt">%1$d added · %2$d already present · %3$d error(s)</string>
+    <string name="main_folder_done_fmt">%1$d file(s) updated · %2$d error(s)</string>
+    <string name="main_downloading_fmt">Downloading: %1$s</string>
+    <string name="main_converting_fmt">MP3 conversion: %1$s</string>
+    <string name="main_tagging_fmt">Tags: %1$s</string>
+    <string name="main_saved_fmt">Saved: %1$s</string>
+    <string name="main_download_pct_fmt">Download %1$d %% : %2$s</string>
+    <string name="main_convert_pct_fmt">MP3 conversion %1$d %% : %2$s</string>
+    <string name="main_error_fmt">Error: %1$s</string>
+
+    <string name="log_download_step">download</string>
+    <string name="log_convert_step">mp3 conversion</string>
+    <string name="log_tags_step">tags + cover + lyrics</string>
+    <string name="log_saved_step">saved</string>
+    <string name="log_analysis_fmt">Analysis: %1$d entries, %2$d present, %3$d to download</string>
+    <string name="log_done_fmt">Done: %1$d added, %2$d present, %3$d error(s)</string>
+    <string name="log_folder_fmt">Folder: %1$d audio file(s)</string>
+    <string name="log_art_fmt">%1$s: %2$d updated, %3$d error(s)</string>
+    <string name="log_item_failed_fmt">failed: %1$s (%2$s)</string>
+    <string name="log_embedded_fmt">Embedded extractor: %1$d bytes</string>
+    <string name="main_running">Running</string>
+    <string name="main_analyze_summary_fmt">%1$d to download · %2$d already present</string>
+    <string name="main_art_working_fmt">%1$s: %2$s</string>
+    <string name="main_delete_files">Delete files</string>
+    <string name="delete_title">Delete files?</string>
+    <string name="delete_message_fmt">%1$d file(s) will be permanently deleted.</string>
+    <string name="delete_confirm">Delete</string>
+    <string name="delete_cancel">Cancel</string>
+    <string name="delete_none">No file selected</string>
+    <string name="delete_done_fmt">%1$d file(s) deleted · %2$d error(s)</string>
+    <string name="app_tagline">YouTube → MP3</string>
+    <string name="settings_rename_title">FILE NAMING</string>
+    <string name="settings_rename_help">Use %YYYY%, %artist%, %title%, %album%. A / creates a subfolder (e.g. %artist%/%title%).</string>
+    <string name="settings_rename_hint">%YYYY% - %artist% - %title%</string>
+    <string name="notif_channel_name">Downloads</string>
+    <string name="notif_channel_desc">Downloads and folder scans in progress</string>
+    <string name="notif_download">Downloading</string>
+    <string name="notif_scan">Folder scan</string>
+    <string name="notif_preparing">Preparing…</string>
+    <string name="notif_converting">Converting…</string>
+    <string name="notif_tagging">Writing tags…</string>
+    <string name="settings_battery_title">BATTERY AND STARTUP</string>
+    <string name="settings_battery_help">On Xiaomi/HyperOS, allow yt-mp3 to run in the background: "No restrictions" and autostart. Otherwise the system may kill a running job.</string>
+    <string name="settings_battery_ignore">Battery: no restrictions</string>
+    <string name="settings_battery_autostart">MIUI autostart</string>
+    <string name="settings_battery_ok">Already unrestricted</string>
+    <string name="settings_battery_unavailable">Setting unavailable on this phone</string>
+    <string name="search_hint">Search a title…</string>
+    <string name="search_files_hint">Search a file…</string>
+</resources>

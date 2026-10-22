@@ -1,0 +1,10 @@
+{
+  "extractor": {
+    "version": 2,
+    "url": "http://192.168.1.10:8000/extractor.dex"
+  },
+  "apk": {
+    "versionCode": 4,
+    "url": "http://192.168.1.10:8000/app-debug.apk"
+  }
+}

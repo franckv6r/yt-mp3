@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Triangle play -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,32 L50,54 L24,76 Z" />
+
+    <!-- Barres audio (capsules) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M60,47.5 a3.5,3.5 0 0 1 7,0 v13 a3.5,3.5 0 0 1 -7,0 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M71,38.5 a3.5,3.5 0 0 1 7,0 v31 a3.5,3.5 0 0 1 -7,0 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M82,44.5 a3.5,3.5 0 0 1 7,0 v19 a3.5,3.5 0 0 1 -7,0 z" />
+</vector>

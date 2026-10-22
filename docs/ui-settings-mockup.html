@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:#0F1318; font-family: Roboto, "Segoe UI", Arial, sans-serif; }
+  .phone { width:390px; height:760px; background:#0F1318; color:#E6EDF5; overflow:hidden; }
+  .status { height:26px; display:flex; justify-content:space-between; align-items:center;
+            padding:0 16px; font-size:11px; color:#9AA7B4; }
+  .toolbar { height:54px; display:flex; align-items:center; padding:0 18px; }
+  .toolbar .back { font-size:19px; color:#C7CBD1; margin-right:16px; }
+  .toolbar .title { font-size:20px; font-weight:500; }
+  .content { padding:8px 20px 20px; }
+  h2 { font-size:20px; font-weight:700; margin:4px 0 8px; }
+  .note { font-size:13px; line-height:1.5; color:#9AA7B4; margin:0 0 22px; }
+  .sect { font-size:11px; font-weight:700; letter-spacing:1.4px; color:#9AA7B4; margin:18px 0 8px; }
+  .field { border:1px solid #3A4656; border-radius:5px; padding:14px; font-size:13px;
+           color:#8E9AA8; background:#1A2028; white-space:nowrap; overflow:hidden; }
+  .btn { background:#7AA2F7; color:#0B0F14; text-align:center; padding:14px; border-radius:26px;
+         font-size:14px; font-weight:600; margin-top:28px; }
+  .btn.alt { background:transparent; color:#7AA2F7; border:1px solid #2C3642; margin-top:10px; }
+</style></head>
+<body>
+<div class="phone">
+  <div class="status"><span>12:59</span><span>▮▮▮ 100%</span></div>
+  <div class="toolbar"><span class="back">←</span><span class="title">Paramètres</span></div>
+  <div class="content">
+    <h2>Mises à jour</h2>
+    <div class="note">Pré-rempli avec la valeur de l'appli. Laisser vide pour désactiver le bloc
+      correspondant sur l'écran principal.</div>
+
+    <div class="sect">MANIFESTE (JSON)</div>
+    <div class="field">https://…/manifest.json</div>
+
+    <div class="sect">EXTRACTEUR (.DEX)</div>
+    <div class="field">https://…/extractor.dex</div>
+
+    <div class="btn">Enregistrer</div>
+    <div class="btn alt">Réinitialiser (valeurs de l'appli)</div>
+  </div>
+</div>
+</body></html>

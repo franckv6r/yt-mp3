@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- La zone visible d'une icone adaptative est ~72dp sur 108dp.
+     14dp d'inset => le glyphe occupe 60 % de la zone visible, comme dans l'en-tete. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:bottom="14dp"
+        android:drawable="@drawable/ic_launcher_glyph"
+        android:left="14dp"
+        android:right="14dp"
+        android:top="14dp" />
+</layer-list>

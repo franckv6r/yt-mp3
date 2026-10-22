@@ -1,0 +1,16 @@
+# Gradle / Android
+.gradle/
+**/build/
+local.properties
+*.iml
+.idea/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Artefacts binaires (regenerables)
+dist/*.apk
+dist/*.dex
+
+# OS
+.DS_Store
