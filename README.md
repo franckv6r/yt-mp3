@@ -1,254 +1,181 @@
-# yt-mp3 — POC Android (v0.4)
+# yt-mp3 — application Android (v0.4.3)
 
-APK native Kotlin : télécharge une **vidéo ou une playlist** YouTube, convertit en **mp3**,
-tague (titre/artiste/année/album via MusicBrainz), ajoute **pochette** (Cover Art Archive) et
-**paroles** (LRCLIB), et enregistre dans le **vrai dossier Musique** du téléphone.
+Télécharge une **vidéo ou une playlist** YouTube, convertit en **MP3**, tague
+(titre / artiste / année / album via MusicBrainz), ajoute **pochette** et
+**paroles**, puis écrit dans le dossier Musique du téléphone.
 
-L'extracteur YouTube (NewPipe) est chargé depuis un `.dex` séparé : il peut être **mis à jour
-sans réinstaller l'APK**, y compris automatiquement via un manifeste JSON.
-
----
-
-## Contenu
-
-| Fichier | Rôle |
-|---|---|
-| `dist/app-debug.apk` | l'application v0.4 (debug) |
-| `dist/extractor.dex` | l'extracteur actuel (NewPipe + adaptateur) |
-| `dist/manifest.example.json` | exemple de manifeste de mise à jour |
-| `build-plugin-dex.sh` | reconstruit `dist/extractor.dex` |
-
-Sources : `/home/franck/opencode-work/android-yt/`
-
-## Écrans
-
-Écran principal :
-
-![Écran principal](docs/screen-main.png)
-
-Paramètres :
-
-![Paramètres](docs/screen-settings.png)
-
-Journal :
-
-![Journal](docs/screen-journal.png)
-
-Confirmation de suppression :
-
-![Suppression](docs/screen-delete-dialog.png)
-
-Historique des URLs :
-
-![Historique](docs/screen-url-history.png)
+Dépôt : <https://github.com/franckv6r/yt-mp3>
+Releases : <https://github.com/franckv6r/yt-mp3/releases>
 
 ---
 
-## Nouveautés v0.2 / v0.3
+## Fonctionnalités
 
-- **Playlists** : coller une URL de playlist ; les morceaux déjà présents sont ignorés.
-  Toutes les pages sont parcourues (garde-fou : 5000 entrées).
-- **Pochettes** : Cover Art Archive via l'ID MusicBrainz.
-- **Paroles** : LRCLIB, synchronisées si disponibles (tag ID3 `USLT`).
-- **MediaStore** : écriture dans le vrai dossier `Music/yt-mp3/` (Android 10+ sans permission ;
-  Android 8–9 demande l'autorisation de stockage).
-- **Dossier de destination au choix** : bouton « Choisir un dossier » (sélecteur Android/SAF),
-  accès mémorisé entre les lancements. Par défaut : `Music/yt-mp3`.
-- **Refonte visuelle** : Material Components (barre supérieure, cartes, champs outlined,
-  boutons arrondis, thème sombre).
-- **Carte Progression** : barre de progression globale + compteurs **Présents / Ajoutés / Erreurs**
-  et l'étape en cours. Le journal détaillé n'encombre plus l'écran principal.
-- **Journal dans le menu** (⋮ → Journal) : journal complet, défilement automatique, bouton
-  « Effacer le journal ».
-- **Analyser le dossier** : liste les mp3 du dossier choisi, cases à cocher, puis
-  « Télécharger les pochettes », « Télécharger les paroles » ou « Pochettes + paroles ».
-  Option « Inclure les sous-dossiers » (décochée par défaut).
-- **Arrêter** les téléchargements/traitements, **Tout cocher / Tout décocher**.
-- **Supprimer les fichiers** sélectionnés (analyse du dossier), avec confirmation du nombre.
-- **Historique des 10 dernières URLs YouTube** : suggestions à l'édition du champ
-  (la plus récente en premier).
-- **Icône** : play + waveform, fond dégradé bleu/violet (variantes dans `docs/icon-variants.png`).
-- **Menu Paramètres** (⋮ en haut à droite) : les deux URLs de mise à jour y sont éditables,
-  pré-remplies avec les valeurs par défaut de l'appli. Elles peuvent être vidées pour
-  désactiver les blocs correspondants ; bouton « Réinitialiser » pour revenir aux valeurs de
-  l'appli.
-- **Manifeste de mise à jour** : extracteur et APK.
-- **UI épurée** : les blocs de mise à jour (extracteur et APK) sont masqués tant qu'aucune URL
-  n'est définie (par défaut ou via Paramètres). Avec une URL, seul le bouton apparaît.
+- téléchargement vidéo ou playlist, avec arrêt et sélection des morceaux ;
+- MP3 192 kbps, tags ID3, pochette, paroles synchronisées si disponibles ;
+- métadonnées MusicBrainz → iTunes → Deezer, avec préférence pour les albums
+  studio (pas les compilations, singles ou bandes originales) ;
+- analyse d'un dossier : pochettes / paroles / renommage des fichiers ;
+- recherche dans les listes, pochettes d'album, sélection visible uniquement ;
+- reprise de la liste après un passage en arrière-plan ou une rotation ;
+- notification de progression et bouton **Arrêter** ;
+- interface sombre, français / anglais / espagnol / allemand ;
+- bouton **Vérifier les mises à jour de l'application** dans les paramètres.
 
 ---
 
-## Installation (sideload)
+## Installation
+
+Depuis une release GitHub :
+
+1. télécharger `app-release.apk` ;
+2. autoriser l'installation d'applications inconnues pour le navigateur ou le
+   gestionnaire de fichiers ;
+3. ouvrir l'APK.
+
+Les releases GitHub sont signées avec la clé de release du dépôt. Une APK de
+debug ne peut pas être remplacée par une release signée avec une autre clé :
+désinstaller l'ancienne APK une fois si nécessaire.
+
+Pour le développement :
 
 ```bash
-adb install -r app-debug.apk
+./gradlew --no-daemon :app:assembleDebug
+# app/build/outputs/apk/debug/app-debug.apk
 ```
-
-Ou copier l'APK sur le téléphone et l'ouvrir (autoriser « Installer des applications inconnues »).
-
-APK signé avec la clé de **debug** : usage local uniquement.
 
 ---
 
-## Utilisation
+## Mises à jour de l'application
 
-1. Coller une URL de vidéo **ou de playlist** dans le champ du haut.
-2. (Optionnel) **Choisir un dossier** de destination. Sans choix, les fichiers vont dans
-   `Music/yt-mp3`. Le dossier choisi est mémorisé (accès persistant SAF), y compris sur carte SD.
-3. **Télécharger en mp3**.
-4. Le journal affiche chaque étape et chaque morceau.
+Dans **Paramètres → Mise à jour de l'application**, le bouton :
 
-Fichiers produits :
+1. interroge `https://api.github.com/repos/franckv6r/yt-mp3/releases/latest` ;
+2. compare le tag de la release (`v0.4.3` → `0.4.3`) à la version installée ;
+3. télécharge le premier `.apk` de la release ;
+4. ouvre l'installateur Android.
 
-```
-<dossier choisi>/ANNEE - Artiste - Titre.mp3
-ou, par defaut :
-/sdcard/Music/yt-mp3/ANNEE - Artiste - Titre.mp3
-```
-
-Ils apparaissent dans le lecteur musique (MediaStore) et sont visibles depuis un gestionnaire
-de fichiers.
-
-> Android 8–9 : autoriser le stockage au premier lancement.
-
----
-
-## Mises à jour
-
-### Extracteur seul
-
-Par défaut :
-
-```kotlin
-const val DEFAULT_EXTRACTOR_URL = ""   // ex. "https://exemple/yt-mp3/extractor.dex"
-```
-
-Modifiable dans **⋮ → Paramètres** :
-- vide → bouton **masqué** ;
-- renseignée → seul le bouton **Mettre à jour l'extracteur** apparaît.
-
-L'appli vérifie que le `.dex` se charge avant de remplacer l'ancien.
-
-### Automatique via manifeste
-
-Par défaut, l'appli utilise la valeur définie dans
+L'URL du dépôt est une constante développeur dans
 `app/src/main/java/com/fp/ytmp3/Config.kt` :
 
 ```kotlin
-const val DEFAULT_MANIFEST_URL = ""   // ex. "https://exemple/yt-mp3/manifest.json"
+const val DEFAULT_GITHUB_REPO = "franckv6r/yt-mp3"
 ```
 
-L'utilisateur peut la modifier dans **⋮ → Paramètres** (pré-remplie avec cette valeur).
-Règles :
-- URL vide → section **masquée** ;
-- URL renseignée → seul le bouton **Vérifier les mises à jour** apparaît, et le manifeste
-  est vérifié au lancement.
+Aucune URL n'est exposée dans les paramètres utilisateur.
 
-Format :
+### Releases automatiques
 
-```json
-{
-  "extractor": { "version": 2, "url": "https://exemple/extractor.dex" },
-  "apk":       { "versionCode": 5, "url": "https://exemple/app-debug.apk" }
-}
-```
+Workflows GitHub Actions :
 
-- `extractor.version` : entier, à incrémenter à chaque nouveau `.dex`.
-  (la version embarquée est **1**)
-- `apk.versionCode` : comparé à celui de l'appli installée (ici **2**).
-- L'extracteur est mis à jour silencieusement.
-- Pour l'APK, Android ouvre l'installateur ; il faut autoriser « Installer des applications
-  inconnues » pour yt-mp3.
+- `.github/workflows/release.yml` : un tag `v*` construit et publie une release
+  avec `app-release.apk` ;
+- `.github/workflows/build-release.yml` : build + signature + création de la
+  release ;
+- `.github/workflows/upstream-extractor.yml` : tous les jours à 03:23 UTC,
+  vérifie la dernière version de **NewPipe Extractor**. Si elle change, met à
+  jour `plugin/build.gradle.kts`, crée un tag et une release.
 
-Le manifeste est vérifié au lancement et via le bouton **Vérifier les mises à jour**.
+L'application utilise **NewPipe Extractor**, pas `yt-dlp` : surveiller yt-dlp ne
+changerait pas l'APK. Le workflow quotidien surveille donc
+`TeamNewPipe/NewPipeExtractor`.
 
-### Tester en local
+### Signature CI
 
-```bash
-cd /home/franck/projects/android/yt-mp3-android
-cp manifest.example.json manifest.json   # adapter l'IP et les versions
-python3 -m http.server 8000
-```
+Les workflows attendent quatre secrets GitHub :
 
-Dans l'appli : `http://IP_DU_PC:8000/manifest.json`.
+- `KEYSTORE_BASE64`
+- `KEYSTORE_PASSWORD`
+- `KEY_ALIAS`
+- `KEY_PASSWORD`
 
-Le POC autorise le HTTP en clair (`usesCleartextTraffic`) pour ce genre de test local.
-En usage réel, servir les fichiers en **HTTPS**.
+Voir [`docs/SIGNING.md`](docs/SIGNING.md). Le keystore et les mots de passe ne
+doivent jamais être commités.
+
+### Ancien manifeste JSON
+
+Le mécanisme `manifest.json` (extracteur + APK) reste dans le code comme secours
+développeur, mais les URL ne sont plus éditables dans les paramètres. Les
+releases GitHub sont le chemin normal.
 
 ---
 
-## Reconstruire
+## Extracteur YouTube
 
-Prérequis : JDK 17, Android SDK (build-tools 35, platform 34), Gradle 8.7.
+L'extracteur NewPipe est chargé depuis `extractor.dex`, séparément de l'APK.
 
 ```bash
 export JAVA_HOME=$HOME/.local/opt/jdk17
 export ANDROID_HOME=$HOME/.local/opt/android-sdk
-cd /home/franck/opencode-work/android-yt
+./build-plugin-dex.sh
+# -> app/src/main/assets/extractor.dex + dist/extractor.dex
+```
 
-./build-plugin-dex.sh          # extractor.dex
-$HOME/.local/opt/gradle-8.7/bin/gradle --no-daemon :app:assembleDebug
-# -> app/build/outputs/apk/debug/app-debug.apk
+Le point d'entrée `plugin/src/main/java/com/fp/ytmp3/plugin/ExtractorApi.java`
+expose :
+
+- `info(url)` : flux audio + titre + chaîne ;
+- `list(url)` : une entrée pour une vidéo, plusieurs pour une playlist.
+
+Les URL `watch?v=…&list=RD…&start_radio=1` sont traitées comme **une vidéo** :
+les mixes/radios YouTube ne sont pas des playlists finies.
+
+---
+
+## Construire
+
+Prérequis : JDK 17, Android SDK (platform 34, build-tools 35), Gradle 8.7
+(ou wrapper fourni).
+
+```bash
+export JAVA_HOME=$HOME/.local/opt/jdk17
+export ANDROID_HOME=$HOME/.local/opt/android-sdk
+
+./gradlew --no-daemon :app:testDebugUnitTest
+./gradlew --no-daemon :app:assembleDebug
+```
+
+Build local de l'extracteur :
+
+```bash
+./build-plugin-dex.sh
 ```
 
 ---
 
 ## Architecture
 
-```
+```text
 com.fp.ytmp3 (Kotlin)
- ├─ PluginLoader        DexClassLoader -> ExtractorApi.info()/list()
- ├─ Http                HttpURLConnection
- ├─ AudioConverter      MediaCodec (décodage) + jump3r/LAME (mp3)
- ├─ MusicBrainz         tags + Cover Art Archive + LRCLIB
- ├─ Tagger              mp3agic (ID3v2 : tags, pochette, paroles)
- ├─ MediaStoreUtil      écriture Music/yt-mp3
- └─ Updater             manifeste -> dex + APK
+ ├─ MainActivity       écrans, jobs, listes, sélection
+ ├─ SettingsActivity   nommage, batterie, mise à jour GitHub
+ ├─ PluginLoader       charge extractor.dex en mémoire
+ ├─ MusicBrainz        métadonnées, pochettes, paroles, cache
+ ├─ GitHubUpdater      dernière release GitHub
+ ├─ Updater            téléchargement + installateur APK
+ ├─ Tagger / SafTagger tags ID3
+ ├─ MediaStoreUtil     écriture MediaStore / SAF
+ └─ LogStore           journal persistant 5 Mo
 
 extractor.dex (Java, NewPipe Extractor GPLv3)
  └─ ExtractorApi.info(url) / list(url)
 ```
 
-L'appli ne référence aucune classe `org.schabi.newpipe` (vérifié : 0 dans son dex).
-
----
-
-## Vérifié ici
-
-- `BUILD SUCCESSFUL`, APK v0.4 (`versionCode 4`, minSdk 26, targetSdk 34).
-- Permissions : INTERNET, WRITE_EXTERNAL_STORAGE (≤ API 28), REQUEST_INSTALL_PACKAGES.
-- FileProvider `com.fp.ytmp3.files` présent (installation APK téléchargée).
-- `assets/extractor.dex` présent (3,5 Mo), `list()` testé **sur JVM** :
-  playlist 353 titres lue, vidéo seule OK.
-- Chaîne MP3 testée **sur JVM** : PCM → LAME → mp3 192 kbps valide, tags relus par `ffprobe`.
-
-## Non vérifié ici
-
-- Exécution sur Android (pas de `/dev/kvm` accessible) : à valider sur téléphone —
-  `MediaCodec`, `DexClassLoader`, MediaStore, installation d'APK.
-
 ---
 
 ## Limites
 
-- Playlist : toutes les pages sont lues, avec un garde-fou à 5000 entrées.
-- YouTube change souvent : publier un nouveau `dist/extractor.dex` suffit.
-- `usesCleartextTraffic=true` pour les tests locaux (à retirer en production).
-- APK de debug : signature de test, pas de publication.
+- YouTube change souvent : mettre à jour NewPipe Extractor et reconstruire le
+  `.dex` / l'APK.
+- Les fournisseurs cloud SAF peuvent ne pas exposer les pochettes intégrées.
+- Une release signée avec une nouvelle clé nécessite une réinstallation.
+- Le contrôle de version se base sur le tag GitHub ; les tags doivent suivre
+  `vX.Y.Z`.
+- L'appli est prévue pour un usage personnel, pas pour le Play Store.
 
 ## Licences
 
-- NewPipe Extractor : **GPLv3** (sources du module `plugin` à fournir si distribution).
-- jump3r (portage Java de LAME) : voir projet d'origine (LAME LGPL).
+- NewPipe Extractor : **GPLv3** (sources du module `plugin` à fournir en cas de
+  distribution).
+- jump3r (LAME) : voir le projet d'origine (LGPL).
 - mp3agic : MIT.
-- Usage personnel ; ne pas publier sur le Play Store.
-
-## Langues
-
-- **Base : anglais** (`values/strings.xml`) — langue par défaut si la langue du téléphone
-  n'est pas prise en charge.
-- Traductions : **français**, **espagnol**, **allemand** (`values-fr`, `values-es`, `values-de`).
-- L'appli suit automatiquement la langue du téléphone.
-- Android 13+ : langue par appli via **Paramètres → Applications → yt-mp3 → Langue**
-  (fichier `res/xml/locales_config.xml`). En ligne de commande :
-  `adb shell cmd locale set-app-locales com.fp.ytmp3 --locales en`.
