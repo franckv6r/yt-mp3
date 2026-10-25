@@ -63,6 +63,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.documentfile:documentfile:1.0.1")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation(project(":plugin"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("de.sciss:jump3r:1.0.5")
     implementation("com.mpatric:mp3agic:0.9.1")

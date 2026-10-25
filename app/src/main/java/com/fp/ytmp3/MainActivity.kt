@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.MaterialAutoCompleteTextView
+import com.fp.ytmp3.plugin.ExtractorApi
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,7 +52,6 @@ enum class ArtMode(val labelRes: Int) {
 class MainActivity : AppCompatActivity() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private var lastCheckedManifest: String? = null
     private lateinit var urlInput: MaterialAutoCompleteTextView
     private lateinit var downloadButton: Button
     private lateinit var destLabel: TextView
@@ -87,7 +87,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statPresentLabel: TextView
     private lateinit var statDownloadedLabel: TextView
     private lateinit var statErrorsLabel: TextView
-    private lateinit var plugin: PluginLoader
     private var destUri: Uri? = null
     private var availableUpdate: GitHubRelease? = null
     private var updateCheckStarted = false
@@ -150,7 +149,6 @@ class MainActivity : AppCompatActivity() {
         statPresent = findViewById(R.id.statPresent)
         statDownloaded = findViewById(R.id.statDownloaded)
         statErrors = findViewById(R.id.statErrors)
-        plugin = PluginLoader(this)
 
         destUri = prefs.getString("destUri", null)?.let { Uri.parse(it) }
         updateDestLabel()
@@ -202,26 +200,11 @@ class MainActivity : AppCompatActivity() {
         statErrorsLabel = findViewById(R.id.statErrorsLabel)
 
         downloadButton.setOnClickListener { analyze() }
-        findViewById<Button>(R.id.btnUpdate).setOnClickListener { updatePluginManually() }
-        findViewById<Button>(R.id.btnCheckUpdates).setOnClickListener { checkUpdates() }
-
-        log(getString(R.string.log_embedded_fmt, plugin.size()))
-        refreshUpdateSections()
         restoreSession()
         findViewById<TextView>(R.id.appTagline).text =
             getString(R.string.app_tagline_version_fmt, Updater.currentVersionName(this))
         findViewById<View>(R.id.updateBanner).setOnClickListener { installAvailableUpdate() }
         checkForAppUpdate()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        refreshUpdateSections()
-        val m = Config.manifest()
-        if (m.isNotBlank() && m != lastCheckedManifest) {
-            lastCheckedManifest = m
-            checkUpdates()
-        }
     }
 
     override fun onPause() {
@@ -276,15 +259,6 @@ class MainActivity : AppCompatActivity() {
                 banner.isEnabled = true
             }
         }
-    }
-
-    private fun refreshUpdateSections() {
-        val manifest = Config.manifest()
-        val extractor = Config.extractor()
-        findViewById<View>(R.id.updatesSection).visibility =
-            if (manifest.isBlank()) View.GONE else View.VISIBLE
-        findViewById<View>(R.id.extractorSection).visibility =
-            if (extractor.isBlank()) View.GONE else View.VISIBLE
     }
 
     private fun setupMenu() {
@@ -617,7 +591,7 @@ class MainActivity : AppCompatActivity() {
         scope.launch {
             try {
                 log("--- $url")
-                val entries = withContext(Dispatchers.IO) { JSONArray(plugin.list(url)) }
+                val entries = withContext(Dispatchers.IO) { JSONArray(ExtractorApi.list(url)) }
                 val total = entries.length()
                 val existing = withContext(Dispatchers.IO) {
                     MediaStoreUtil.listAudio(this@MainActivity, destUri, true)
@@ -1029,7 +1003,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private suspend fun downloadOne(webUrl: String): String {
-        val info = withContext(Dispatchers.IO) { JSONObject(plugin.info(webUrl)) }
+        val info = withContext(Dispatchers.IO) { JSONObject(ExtractorApi.info(webUrl)) }
         val audioUrl = info.getString("url")
         val title = info.optString("title")
         val uploader = info.optString("uploader")
@@ -1110,54 +1084,6 @@ class MainActivity : AppCompatActivity() {
         src.delete()
         mp3.delete()
         return where
-    }
-
-    private fun updatePluginManually() {
-        val url = Config.extractor().trim()
-        if (url.isEmpty()) return
-        scope.launch {
-            try {
-                log("Updating extractor...")
-                log(withContext(Dispatchers.IO) { plugin.updateFrom(url) })
-            } catch (e: Exception) {
-                Log.e("yt-mp3", "update", e)
-                log(getString(R.string.main_error_fmt, "${e.javaClass.simpleName}: ${e.message}"))
-            }
-        }
-    }
-
-    private fun checkUpdates() {
-        val m = Config.manifest().trim()
-        if (m.isBlank()) return
-        scope.launch {
-            try {
-                log("Checking for updates...")
-                val u = withContext(Dispatchers.IO) { Updater.fetch(m) }
-                var acted = false
-
-                val stored = prefs.getInt("extractorVersion", 1)
-                if (u.extractorUrl != null && u.extractorVersion > stored) {
-                    log("Extractor update -> v${u.extractorVersion}")
-                    log(withContext(Dispatchers.IO) { plugin.updateFrom(u.extractorUrl) })
-                    prefs.edit().putInt("extractorVersion", u.extractorVersion).apply()
-                    acted = true
-                }
-
-                val cur = Updater.currentVersionCode(this@MainActivity)
-                if (u.apkUrl != null && u.apkVersionCode > cur) {
-                    log("APK update -> v${u.apkVersionCode}, downloading...")
-                    val apk = withContext(Dispatchers.IO) { Updater.downloadApk(this@MainActivity, u.apkUrl) }
-                    log("APK downloaded, opening installer")
-                    Updater.install(this@MainActivity, apk)
-                    acted = true
-                }
-
-                if (!acted) log("Up to date (APK v$cur)")
-            } catch (e: Exception) {
-                Log.e("yt-mp3", "check updates", e)
-                log("Update error: ${e.javaClass.simpleName}: ${e.message}")
-            }
-        }
     }
 
     override fun onDestroy() {

@@ -1,4 +1,4 @@
-# yt-mp3 — application Android (v0.4.5)
+# yt-mp3 — application Android (v0.4.6)
 
 Télécharge une **vidéo ou une playlist** YouTube, convertit en **MP3**, tague
 (titre / artiste / année / album via MusicBrainz), ajoute **pochette** et
@@ -49,13 +49,13 @@ Pour le développement :
 ## Mises à jour de l'application
 
 Au lancement, l'application affiche sa version dans le header
-(`YouTube → MP3 · v0.4.5`) et interroge
+(`YouTube → MP3 · v0.4.6`) et interroge
 `https://api.github.com/repos/franckv6r/yt-mp3/releases/latest`.
 
 Si le tag de la dernière release est plus récent que la version installée, un
 bandeau cliquable apparaît sous le header :
 
-> Nouvelle version v0.4.5 disponible — installer
+> Nouvelle version v0.4.6 disponible — installer
 
 Un clic télécharge le premier `.apk` de la release et ouvre l'installateur
 Android. Le contrôle est silencieux s'il n'y a pas de réseau ou pas encore de
@@ -98,24 +98,12 @@ Les workflows attendent quatre secrets GitHub :
 Voir [`docs/SIGNING.md`](docs/SIGNING.md). Le keystore et les mots de passe ne
 doivent jamais être commités.
 
-### Ancien manifeste JSON
-
-Le mécanisme `manifest.json` (extracteur + APK) reste dans le code comme secours
-développeur, mais les URL ne sont plus éditables dans les paramètres. Les
-releases GitHub sont le chemin normal.
-
----
-
 ## Extracteur YouTube
 
-L'extracteur NewPipe est chargé depuis `extractor.dex`, séparément de l'APK.
-
-```bash
-export JAVA_HOME=$HOME/.local/opt/jdk17
-export ANDROID_HOME=$HOME/.local/opt/android-sdk
-./build-plugin-dex.sh
-# -> app/src/main/assets/extractor.dex + dist/extractor.dex
-```
+NewPipe Extractor est compilé **directement dans l'APK** via le module `:plugin`.
+Il n'y a plus de `.dex` chargé dynamiquement ni de mise à jour d'extracteur à
+chaud : une nouvelle version de NewPipe passe par une nouvelle release APK,
+créée par le workflow quotidien.
 
 Le point d'entrée `plugin/src/main/java/com/fp/ytmp3/plugin/ExtractorApi.java`
 expose :
@@ -141,12 +129,6 @@ export ANDROID_HOME=$HOME/.local/opt/android-sdk
 ./gradlew --no-daemon :app:assembleDebug
 ```
 
-Build local de l'extracteur :
-
-```bash
-./build-plugin-dex.sh
-```
-
 ---
 
 ## Architecture
@@ -155,7 +137,6 @@ Build local de l'extracteur :
 com.fp.ytmp3 (Kotlin)
  ├─ MainActivity       écrans, jobs, listes, sélection
  ├─ SettingsActivity   nommage, batterie
- ├─ PluginLoader       charge extractor.dex en mémoire
  ├─ MusicBrainz        métadonnées, pochettes, paroles, cache
  ├─ GitHubUpdater      dernière release GitHub
  ├─ Updater            téléchargement + installateur APK
@@ -163,7 +144,7 @@ com.fp.ytmp3 (Kotlin)
  ├─ MediaStoreUtil     écriture MediaStore / SAF
  └─ LogStore           journal persistant 5 Mo
 
-extractor.dex (Java, NewPipe Extractor GPLv3)
+plugin (Java, NewPipe Extractor GPLv3, compilé dans l'APK)
  └─ ExtractorApi.info(url) / list(url)
 ```
 
@@ -171,8 +152,10 @@ extractor.dex (Java, NewPipe Extractor GPLv3)
 
 ## Limites
 
-- YouTube change souvent : mettre à jour NewPipe Extractor et reconstruire le
-  `.dex` / l'APK.
+- YouTube change souvent : le workflow quotidien met à jour NewPipe Extractor
+  et publie une nouvelle APK.
+- Google Play Protect peut afficher un avertissement pour une application
+  installée hors Play Store, même avec une APK propre. Xiaomi Security passe.
 - Les fournisseurs cloud SAF peuvent ne pas exposer les pochettes intégrées.
 - Une release signée avec une nouvelle clé nécessite une réinstallation.
 - Le contrôle de version se base sur le tag GitHub ; les tags doivent suivre

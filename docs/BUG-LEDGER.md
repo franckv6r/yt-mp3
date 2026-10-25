@@ -118,3 +118,10 @@
 - Fix : detection `start_radio=1` / `list=RD…` -> video unique ; URL canonique `https://www.youtube.com/watch?v=ID` avant `getStreamExtractor` ; vrai `list=PL…` inchange.
 - Non-regression : test JVM de l'URL fournie -> **1 entree** (`Agnes Obel - Riverside`), au lieu de 4825 ; APK reconstruit avec le nouveau dex.
 - Occurrences : 1.
+
+## 2026-10-25 — Play Protect : chargement dynamique du dex supprime
+- Symptome : Google Play Protect signale l'APK comme potentiellement dangereuse ; Xiaomi Security passe.
+- Cause probable : APK hors Play Store + auto-mise a jour + chargement dynamique de `extractor.dex` dans un repertoire inscriptible.
+- Fix : NewPipe Extractor est compile directement dans l'APK via `:plugin` ; suppression de `PluginLoader`, de l'asset `extractor.dex`, du script de dex et de l'ancien updater d'extracteur. Cleartext HTTP et backup desactives.
+- Non-regression : APK sans `extractor.dex`, classes `ExtractorApi` incluses, 28 tests, release APK via CI. Play Protect peut encore avertir : l'appli reste hors Play Store.
+- Occurrences : 1.

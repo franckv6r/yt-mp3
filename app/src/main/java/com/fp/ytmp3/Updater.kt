@@ -7,35 +7,9 @@ import androidx.core.content.FileProvider
 import org.json.JSONObject
 import java.io.File
 
-data class UpdateInfo(
-    val extractorVersion: Int,
-    val extractorUrl: String?,
-    val apkVersionCode: Int,
-    val apkUrl: String?
-)
-
 object Updater {
 
     private const val UA = "yt-mp3-poc/0.2 ( local )"
-
-    /**
-     * Manifeste attendu :
-     * {
-     *   "extractor": {"version": 2, "url": "https://.../extractor.dex"},
-     *   "apk":       {"versionCode": 2, "url": "https://.../app-debug.apk"}
-     * }
-     */
-    fun fetch(manifestUrl: String): UpdateInfo {
-        val o = JSONObject(Http.text(manifestUrl, mapOf("User-Agent" to UA)))
-        val ex = o.optJSONObject("extractor")
-        val apk = o.optJSONObject("apk")
-        return UpdateInfo(
-            ex?.optInt("version", 0) ?: 0,
-            ex?.optString("url")?.takeIf { it.isNotBlank() },
-            apk?.optInt("versionCode", 0) ?: 0,
-            apk?.optString("url")?.takeIf { it.isNotBlank() }
-        )
-    }
 
     fun downloadApk(ctx: Context, url: String): File {
         val f = File(ctx.cacheDir, "update.apk")

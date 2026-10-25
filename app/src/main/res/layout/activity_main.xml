@@ -646,45 +646,6 @@
             </LinearLayout>
 
 
-            <LinearLayout
-                android:id="@+id/extractorSection"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone">
-
-                <com.google.android.material.button.MaterialButton
-        android:textAllCaps="false"
-                    android:id="@+id/btnUpdate"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/main_update_extractor"
-                    android:textColor="@color/primary"
-                    app:cornerRadius="26dp"
-                    app:strokeColor="@color/outline" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/updatesSection"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:visibility="gone">
-
-                <com.google.android.material.button.MaterialButton
-        android:textAllCaps="false"
-                    android:id="@+id/btnCheckUpdates"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:text="@string/main_check_updates"
-                    android:textColor="@color/primary"
-                    app:cornerRadius="26dp"
-                    app:strokeColor="@color/outline" />
-            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>
