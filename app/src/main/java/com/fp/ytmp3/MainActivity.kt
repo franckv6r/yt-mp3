@@ -89,6 +89,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statErrorsLabel: TextView
     private lateinit var plugin: PluginLoader
     private var destUri: Uri? = null
+    private var availableUpdate: GitHubRelease? = null
+    private var updateCheckStarted = false
 
     private val prefs by lazy { getSharedPreferences("conf", MODE_PRIVATE) }
 
@@ -206,6 +208,10 @@ class MainActivity : AppCompatActivity() {
         log(getString(R.string.log_embedded_fmt, plugin.size()))
         refreshUpdateSections()
         restoreSession()
+        findViewById<TextView>(R.id.appTagline).text =
+            getString(R.string.app_tagline_version_fmt, Updater.currentVersionName(this))
+        findViewById<View>(R.id.updateBanner).setOnClickListener { installAvailableUpdate() }
+        checkForAppUpdate()
     }
 
     override fun onResume() {
@@ -221,6 +227,55 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         saveSession()
         super.onPause()
+    }
+
+    /** Verifie discretement la derniere release au lancement. */
+    private fun checkForAppUpdate() {
+        if (updateCheckStarted) return
+        updateCheckStarted = true
+        scope.launch {
+            try {
+                val rel = withContext(Dispatchers.IO) {
+                    GitHubUpdater.latest(Config.githubRepo())
+                }
+                if (!GitHubUpdater.isNewer(rel.version, Updater.currentVersionName(this@MainActivity))) {
+                    return@launch
+                }
+                availableUpdate = rel
+                val banner = findViewById<TextView>(R.id.updateBanner)
+                banner.text = getString(R.string.update_available_fmt, rel.version)
+                banner.visibility = View.VISIBLE
+            } catch (_: Exception) {
+                // Pas de reseau / pas encore de release : on reste silencieux.
+            }
+        }
+    }
+
+    private fun installAvailableUpdate() {
+        val rel = availableUpdate ?: return
+        val banner = findViewById<TextView>(R.id.updateBanner)
+        banner.isEnabled = false
+        banner.text = getString(R.string.update_downloading)
+        scope.launch {
+            try {
+                val apk = withContext(Dispatchers.IO) {
+                    Updater.downloadApk(this@MainActivity, rel.apkUrl)
+                }
+                if (apk.length() < 1000) throw IllegalStateException("APK vide")
+                val info = packageManager.getPackageArchiveInfo(apk.absolutePath, 0)
+                if (info?.packageName != packageName) {
+                    throw IllegalStateException("APK d'une autre application")
+                }
+                banner.text = getString(R.string.update_install)
+                Updater.install(this@MainActivity, apk)
+            } catch (e: Exception) {
+                banner.text = getString(
+                    R.string.update_error_fmt,
+                    e.message ?: e.javaClass.simpleName
+                )
+                banner.isEnabled = true
+            }
+        }
     }
 
     private fun refreshUpdateSections() {

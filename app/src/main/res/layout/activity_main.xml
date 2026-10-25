@@ -39,6 +39,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/appTagline"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/app_tagline"
@@ -60,6 +61,22 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="@color/outline" />
+
+    <TextView
+        android:id="@+id/updateBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface2"
+        android:clickable="true"
+        android:focusable="true"
+        android:paddingStart="20dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="10dp"
+        android:textColor="@color/primary"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
     <ScrollView
         android:id="@+id/mainScroll"

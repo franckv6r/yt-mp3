@@ -95,6 +95,11 @@
     <string name="delete_none">No file selected</string>
     <string name="delete_done_fmt">%1$d file(s) deleted · %2$d error(s)</string>
     <string name="app_tagline">YouTube → MP3</string>
+    <string name="app_tagline_version_fmt">YouTube → MP3 · v%1$s</string>
+    <string name="update_available_fmt">New version %1$s available — install</string>
+    <string name="update_downloading">Downloading update…</string>
+    <string name="update_install">Update downloaded, opening installer…</string>
+    <string name="update_error_fmt">Update failed: %1$s</string>
     <string name="settings_rename_title">FILE NAMING</string>
     <string name="settings_rename_help">Use %YYYY%, %artist%, %title%, %album%. A / creates a subfolder (e.g. %artist%/%title%).</string>
     <string name="settings_rename_hint">%YYYY% - %artist% - %title%</string>

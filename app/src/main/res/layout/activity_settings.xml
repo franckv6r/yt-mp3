@@ -109,46 +109,6 @@
                 app:cornerRadius="26dp"
                 app:strokeColor="@color/outline" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:letterSpacing="0.12"
-                android:text="@string/settings_update_title"
-                android:textColor="@color/muted"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:paddingBottom="8dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:lineSpacingExtra="3dp"
-                android:text="@string/settings_update_help"
-                android:textColor="@color/muted"
-                android:textSize="12sp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnUpdateApp"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textAllCaps="false"
-                android:text="@string/settings_update_check"
-                android:textColor="@color/primary"
-                app:cornerRadius="26dp"
-                app:strokeColor="@color/outline" />
-
-            <TextView
-                android:id="@+id/updateStatus"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:textColor="@color/muted"
-                android:textSize="12sp"
-                android:visibility="gone" />
-
             <com.google.android.material.button.MaterialButton
         android:textAllCaps="false"
                 android:id="@+id/btnSaveSettings"

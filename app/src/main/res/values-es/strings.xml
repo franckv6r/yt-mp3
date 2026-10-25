@@ -88,6 +88,11 @@
     <string name="delete_none">Ningún archivo seleccionado</string>
     <string name="delete_done_fmt">%1$d archivo(s) eliminado(s) · %2$d error(es)</string>
     <string name="app_tagline">YouTube → MP3</string>
+    <string name="app_tagline_version_fmt">YouTube → MP3 · v%1$s</string>
+    <string name="update_available_fmt">Nueva versión %1$s disponible — instalar</string>
+    <string name="update_downloading">Descargando actualización…</string>
+    <string name="update_install">Actualización descargada, abriendo el instalador…</string>
+    <string name="update_error_fmt">No se pudo actualizar: %1$s</string>
     <string name="settings_rename_title">NOMBRES DE ARCHIVOS</string>
     <string name="settings_rename_help">Usa %YYYY%, %artist%, %title%, %album%. Una / crea una subcarpeta (p. ej. %artist%/%title%).</string>
     <string name="settings_rename_hint">%YYYY% - %artist% - %title%</string>

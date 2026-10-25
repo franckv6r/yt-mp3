@@ -8,22 +8,13 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.widget.Button
 import android.widget.EditText
-import android.view.View
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class SettingsActivity : AppCompatActivity() {
 
     private val prefs by lazy { getSharedPreferences("conf", MODE_PRIVATE) }
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,51 +46,6 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnBatteryAutostart).setOnClickListener {
             openAutostart()
         }
-
-        val updateButton = findViewById<Button>(R.id.btnUpdateApp)
-        val updateStatus = findViewById<TextView>(R.id.updateStatus)
-        updateButton.setOnClickListener {
-            updateButton.isEnabled = false
-            updateStatus.visibility = View.VISIBLE
-            updateStatus.text = getString(R.string.settings_update_checking)
-            scope.launch {
-                try {
-                    val rel = withContext(Dispatchers.IO) {
-                        GitHubUpdater.latest(Config.githubRepo())
-                    }
-                    val current = Updater.currentVersionName(this@SettingsActivity)
-                    if (!GitHubUpdater.isNewer(rel.version, current)) {
-                        updateStatus.text = getString(R.string.settings_update_latest, current)
-                        return@launch
-                    }
-                    updateStatus.text = getString(R.string.settings_update_found, rel.version)
-                    val apk = withContext(Dispatchers.IO) {
-                        Updater.downloadApk(this@SettingsActivity, rel.apkUrl)
-                    }
-                    if (apk.length() < 1000) {
-                        throw IllegalStateException("APK vide")
-                    }
-                    val info = packageManager.getPackageArchiveInfo(apk.absolutePath, 0)
-                    if (info?.packageName != packageName) {
-                        throw IllegalStateException("APK d'une autre application")
-                    }
-                    updateStatus.text = getString(R.string.settings_update_downloading, rel.version)
-                    Updater.install(this@SettingsActivity, apk)
-                } catch (e: Exception) {
-                    updateStatus.text = getString(
-                        R.string.settings_update_error,
-                        e.message ?: e.javaClass.simpleName
-                    )
-                } finally {
-                    updateButton.isEnabled = true
-                }
-            }
-        }
-    }
-
-    override fun onDestroy() {
-        scope.cancel()
-        super.onDestroy()
     }
 
     /** Demande a Android d'exclure l'appli de l'optimisation batterie. */

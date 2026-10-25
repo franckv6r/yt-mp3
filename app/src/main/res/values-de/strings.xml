@@ -88,6 +88,11 @@
     <string name="delete_none">Keine Datei ausgewählt</string>
     <string name="delete_done_fmt">%1$d Datei(en) gelöscht · %2$d Fehler</string>
     <string name="app_tagline">YouTube → MP3</string>
+    <string name="app_tagline_version_fmt">YouTube → MP3 · v%1$s</string>
+    <string name="update_available_fmt">Neue Version %1$s verfügbar — installieren</string>
+    <string name="update_downloading">Update wird heruntergeladen…</string>
+    <string name="update_install">Update heruntergeladen, Installer wird geöffnet…</string>
+    <string name="update_error_fmt">Update fehlgeschlagen: %1$s</string>
     <string name="settings_rename_title">DATEINAMEN</string>
     <string name="settings_rename_help">Verwende %YYYY%, %artist%, %title%, %album%. Ein / erstellt einen Unterordner (z. B. %artist%/%title%).</string>
     <string name="settings_rename_hint">%YYYY% - %artist% - %title%</string>

@@ -1,4 +1,4 @@
-# yt-mp3 — application Android (v0.4.3)
+# yt-mp3 — application Android (v0.4.4)
 
 Télécharge une **vidéo ou une playlist** YouTube, convertit en **MP3**, tague
 (titre / artiste / année / album via MusicBrainz), ajoute **pochette** et
@@ -48,12 +48,18 @@ Pour le développement :
 
 ## Mises à jour de l'application
 
-Dans **Paramètres → Mise à jour de l'application**, le bouton :
+Au lancement, l'application affiche sa version dans le header
+(`YouTube → MP3 · v0.4.4`) et interroge
+`https://api.github.com/repos/franckv6r/yt-mp3/releases/latest`.
 
-1. interroge `https://api.github.com/repos/franckv6r/yt-mp3/releases/latest` ;
-2. compare le tag de la release (`v0.4.3` → `0.4.3`) à la version installée ;
-3. télécharge le premier `.apk` de la release ;
-4. ouvre l'installateur Android.
+Si le tag de la dernière release est plus récent que la version installée, un
+bandeau cliquable apparaît sous le header :
+
+> Nouvelle version v0.4.5 disponible — installer
+
+Un clic télécharge le premier `.apk` de la release et ouvre l'installateur
+Android. Le contrôle est silencieux s'il n'y a pas de réseau ou pas encore de
+release.
 
 L'URL du dépôt est une constante développeur dans
 `app/src/main/java/com/fp/ytmp3/Config.kt` :
@@ -148,7 +154,7 @@ Build local de l'extracteur :
 ```text
 com.fp.ytmp3 (Kotlin)
  ├─ MainActivity       écrans, jobs, listes, sélection
- ├─ SettingsActivity   nommage, batterie, mise à jour GitHub
+ ├─ SettingsActivity   nommage, batterie
  ├─ PluginLoader       charge extractor.dex en mémoire
  ├─ MusicBrainz        métadonnées, pochettes, paroles, cache
  ├─ GitHubUpdater      dernière release GitHub
