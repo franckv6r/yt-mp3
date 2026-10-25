@@ -1,0 +1,67 @@
+name: Daily extractor check
+
+# L'appli utilise NewPipe Extractor (pas yt-dlp). On surveille donc
+# TeamNewPipe/NewPipeExtractor : si une version sort, on bump le plugin,
+# on cree un tag et une release APK.
+on:
+  schedule:
+    - cron: "23 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+      tag: ${{ steps.check.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Check latest NewPipe Extractor
+        id: check
+        shell: bash
+        run: |
+          latest=$(curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/TeamNewPipe/NewPipeExtractor/releases/latest \
+            | jq -r .tag_name)
+          pinned=$(grep -o 'NewPipeExtractor:v[^"]*' plugin/build.gradle.kts | head -1 | cut -d: -f2)
+          echo "latest=$latest"
+          echo "pinned=$pinned"
+          if [ -z "$latest" ] || [ "$latest" = "null" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$latest" = "$pinned" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          sed -i "s/NewPipeExtractor:$pinned/NewPipeExtractor:$latest/" plugin/build.gradle.kts
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add plugin/build.gradle.kts
+          git commit -m "chore: bump NewPipe Extractor ${latest}"
+
+          last=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.4")
+          base=$(echo "${last#v}" | cut -d. -f1-2)
+          tag="v${base}.${GITHUB_RUN_NUMBER}"
+          git tag "$tag"
+          git push origin HEAD:master
+          git push origin "$tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+  release:
+    needs: bump
+    if: needs.bump.outputs.changed == 'true'
+    uses: ./.github/workflows/build-release.yml
+    with:
+      tag: ${{ needs.bump.outputs.tag }}
+    secrets: inherit

@@ -98,6 +98,14 @@
     <string name="notif_preparing">Wird vorbereitet…</string>
     <string name="notif_converting">Wird konvertiert…</string>
     <string name="notif_tagging">Tags werden geschrieben…</string>
+    <string name="settings_update_title">APP-AKTUALISIERUNG</string>
+    <string name="settings_update_help">Prüft die neueste GitHub-Release, lädt die APK herunter und öffnet den Android-Installer.</string>
+    <string name="settings_update_check">App-Updates suchen</string>
+    <string name="settings_update_checking">GitHub wird geprüft…</string>
+    <string name="settings_update_latest">Bereits aktuell (v%1$s)</string>
+    <string name="settings_update_found">Version %1$s verfügbar, wird heruntergeladen…</string>
+    <string name="settings_update_downloading">Version %1$s heruntergeladen, Installer wird geöffnet…</string>
+    <string name="settings_update_error">Update fehlgeschlagen: %1$s</string>
     <string name="settings_battery_title">AKKU UND AUTOSTART</string>
     <string name="settings_battery_help">Erlaube yt-mp3 auf Xiaomi/HyperOS im Hintergrund zu laufen: „Keine Einschränkungen“ und Autostart. Sonst kann das System einen laufenden Job beenden.</string>
     <string name="settings_battery_ignore">Akku: keine Einschränkungen</string>

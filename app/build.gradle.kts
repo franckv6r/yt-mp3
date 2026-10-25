@@ -3,6 +3,10 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val ciKeystore = System.getenv("KEYSTORE_FILE")
+val buildVersionCode = (findProperty("versionCode") as String?)?.toIntOrNull() ?: 9
+val buildVersionName = (findProperty("versionName") as String?) ?: "0.4"
+
 android {
     namespace = "com.fp.ytmp3"
     compileSdk = 34
@@ -11,8 +15,31 @@ android {
         applicationId = "com.fp.ytmp3"
         minSdk = 26
         targetSdk = 34
-        versionCode = 9
-        versionName = "0.4"
+        versionCode = buildVersionCode
+        versionName = buildVersionName
+    }
+
+    signingConfigs {
+        if (ciKeystore != null) {
+            create("ci") {
+                storeFile = file(ciKeystore)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            // Sans secret CI, on garde une APK installable localement en debug.
+            signingConfig = if (ciKeystore != null) {
+                signingConfigs.getByName("ci")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+            isMinifyEnabled = false
+        }
     }
 
     compileOptions {

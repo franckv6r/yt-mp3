@@ -57,4 +57,58 @@ object Updater {
         val pi = ctx.packageManager.getPackageInfo(ctx.packageName, 0)
         return if (Build.VERSION.SDK_INT >= 28) pi.longVersionCode.toInt() else pi.versionCode
     }
+
+    fun currentVersionName(ctx: Context): String =
+        ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName ?: "0"
+}
+
+/** Derniere release GitHub + APK a installer. */
+data class GitHubRelease(val tag: String, val version: String, val apkUrl: String)
+
+object GitHubUpdater {
+
+    private const val UA = "yt-mp3-poc/0.4 ( local )"
+
+    fun latest(repo: String): GitHubRelease {
+        if (repo.isBlank()) throw IllegalStateException("depot GitHub non configure")
+        val url = "https://api.github.com/repos/$repo/releases/latest"
+        val json = Http.text(
+            url,
+            mapOf("User-Agent" to UA, "Accept" to "application/vnd.github+json")
+        )
+        val o = JSONObject(json)
+        val tag = o.optString("tag_name").ifBlank { "unknown" }
+        val assets = o.optJSONArray("assets") ?: throw IllegalStateException("release sans fichier")
+        var apk: String? = null
+        for (i in 0 until assets.length()) {
+            val a = assets.optJSONObject(i) ?: continue
+            if (!a.optString("name").endsWith(".apk", ignoreCase = true)) continue
+            val u = a.optString("browser_download_url")
+            if (u.isNotBlank()) { apk = u; break }
+        }
+        return GitHubRelease(
+            tag = tag,
+            version = versionOf(tag),
+            apkUrl = apk ?: throw IllegalStateException("aucun APK dans la release")
+        )
+    }
+
+    /** v0.5.1 / 0.5.1 -> liste de nombres ; compare sans dependre du prefixe. */
+    fun isNewer(latest: String, current: String): Boolean {
+        val a = numbers(latest)
+        val b = numbers(current)
+        if (a.isEmpty() || b.isEmpty()) return latest != current
+        for (i in 0 until maxOf(a.size, b.size)) {
+            val x = a.getOrElse(i) { 0 }
+            val y = b.getOrElse(i) { 0 }
+            if (x != y) return x > y
+        }
+        return false
+    }
+
+    private fun versionOf(tag: String): String =
+        Regex("""v?(\d+(?:\.\d+)*)""").find(tag)?.groupValues?.get(1) ?: tag
+
+    private fun numbers(v: String): List<Int> =
+        Regex("""\d+""").findAll(v).mapNotNull { it.value.toIntOrNull() }.toList()
 }

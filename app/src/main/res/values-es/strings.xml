@@ -98,6 +98,14 @@
     <string name="notif_preparing">Preparando…</string>
     <string name="notif_converting">Convirtiendo…</string>
     <string name="notif_tagging">Escribiendo etiquetas…</string>
+    <string name="settings_update_title">ACTUALIZACIÓN DE LA APP</string>
+    <string name="settings_update_help">Comprueba la última release de GitHub, descarga el APK y abre el instalador de Android.</string>
+    <string name="settings_update_check">Buscar actualizaciones de la app</string>
+    <string name="settings_update_checking">Buscando en GitHub…</string>
+    <string name="settings_update_latest">Ya está actualizado (v%1$s)</string>
+    <string name="settings_update_found">Versión %1$s disponible, descargando…</string>
+    <string name="settings_update_downloading">Versión %1$s descargada, abriendo el instalador…</string>
+    <string name="settings_update_error">No se pudo actualizar: %1$s</string>
     <string name="settings_battery_title">BATERÍA E INICIO</string>
     <string name="settings_battery_help">En Xiaomi/HyperOS, permite que yt-mp3 se ejecute en segundo plano: «Sin restricciones» e inicio automático. Si no, el sistema puede cerrar un trabajo en curso.</string>
     <string name="settings_battery_ignore">Batería: sin restricciones</string>

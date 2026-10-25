@@ -11,6 +11,7 @@ object Config {
     // Valeurs par defaut de l'application. Laisser vide pour desactiver la fonction.
     const val DEFAULT_MANIFEST_URL = ""
     const val DEFAULT_EXTRACTOR_URL = ""
+    const val DEFAULT_GITHUB_REPO = "franckv6r/yt-mp3"
     const val DEFAULT_RENAME_PATTERN = "%YYYY% - %artist% - %title%"
 
     private const val KEY_PATTERN = "renamePattern"
@@ -19,6 +20,8 @@ object Config {
     fun manifest(): String = DEFAULT_MANIFEST_URL
 
     fun extractor(): String = DEFAULT_EXTRACTOR_URL
+
+    fun githubRepo(): String = DEFAULT_GITHUB_REPO
 
     fun renamePattern(prefs: SharedPreferences): String {
         val v = prefs.getString(KEY_PATTERN, "") ?: ""

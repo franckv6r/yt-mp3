@@ -111,3 +111,10 @@
 - Fix : detection compilation au niveau **album** (types secondaires MusicBrainz + mots d'album), penalite EP/single/remix, et si MusicBrainz renvoie une compilation, iTunes/Deezer est consulte et une sortie studio remplace l'album ; cache v4.
 - Non-regression : tests `itunesPrefersStudioAlbumOverCompilationForCover`, `itunesPrefersAlbumOverSingleAndCompilation` ; 25 tests, build OK.
 - Occurrences : 1.
+
+## 2026-10-24 — Lien radio YouTube interprete comme playlist de 4825 videos
+- Symptome : un lien `watch?v=…&list=RD…&start_radio=1` lancait une analyse de 5 min et proposait 4825 videos.
+- Cause racine : `ExtractorApi.list()` considerait toute URL contenant `list=` comme une playlist ; les listes `RD…` sont des radios/mix auto-generees quasi infinies. De plus NewPipe refuse l'URL mobile avec `start_radio` pour l'extraction d'une video seule.
+- Fix : detection `start_radio=1` / `list=RD…` -> video unique ; URL canonique `https://www.youtube.com/watch?v=ID` avant `getStreamExtractor` ; vrai `list=PL…` inchange.
+- Non-regression : test JVM de l'URL fournie -> **1 entree** (`Agnes Obel - Riverside`), au lieu de 4825 ; APK reconstruit avec le nouveau dex.
+- Occurrences : 1.

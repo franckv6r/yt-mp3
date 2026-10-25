@@ -36,7 +36,7 @@ public final class ExtractorApi {
     public static String info(String videoUrl) throws Exception {
         init();
         StreamingService service = NewPipe.getServiceByUrl(videoUrl);
-        StreamExtractor ex = service.getStreamExtractor(videoUrl);
+        StreamExtractor ex = service.getStreamExtractor(canonicalVideoUrl(videoUrl));
         ex.fetchPage();
 
         AudioStream best = null;
@@ -73,7 +73,13 @@ public final class ExtractorApi {
     public static String list(String url) throws Exception {
         init();
         StreamingService service = NewPipe.getServiceByUrl(url);
-        boolean looksPlaylist = url.contains("list=") || url.contains("/playlist");
+        String listId = param(url, "list");
+        // YouTube "radio/mix" URLs (watch?v=...&list=RD...&start_radio=1)
+        // ne sont pas des playlists : elles renvoient une file quasi infinie.
+        boolean radio = "1".equals(param(url, "start_radio"))
+                || (listId != null && listId.startsWith("RD"));
+        boolean looksPlaylist = !radio
+                && ((listId != null && !listId.isEmpty()) || url.contains("/playlist"));
         if (looksPlaylist) {
             try {
                 PlaylistExtractor pe = service.getPlaylistExtractor(url);
@@ -112,7 +118,7 @@ public final class ExtractorApi {
                 // playlist non exploitable : on retombe sur la video
             }
         }
-        StreamExtractor se = service.getStreamExtractor(url);
+        StreamExtractor se = service.getStreamExtractor(canonicalVideoUrl(url));
         se.fetchPage();
         return "[{\"url\":\"" + esc(url)
                 + "\",\"title\":\"" + esc(se.getName())
@@ -126,6 +132,37 @@ public final class ExtractorApi {
         }
         NewPipe.init(new HttpDownloader());
         ready = true;
+    }
+
+    /** NewPipe refuse les URLs mobiles avec start_radio/pp : on revient au format canonique. */
+    private static String canonicalVideoUrl(String url) {
+        String v = param(url, "v");
+        if (v != null && !v.isEmpty()) {
+            return "https://www.youtube.com/watch?v=" + v;
+        }
+        int i = url.indexOf("youtu.be/");
+        if (i >= 0) {
+            String id = url.substring(i + "youtu.be/".length());
+            int cut = id.indexOf('?');
+            if (cut >= 0) id = id.substring(0, cut);
+            if (!id.isEmpty()) return "https://www.youtube.com/watch?v=" + id;
+        }
+        return url;
+    }
+
+    private static String param(String url, String key) {
+        String needle = key + "=";
+        int q = url.indexOf('?');
+        int start = q < 0 ? 0 : q + 1;
+        while (start > 0 && start < url.length()) {
+            int end = url.indexOf('&', start);
+            if (end < 0) end = url.length();
+            String part = url.substring(start, end);
+            if (part.startsWith(needle)) return part.substring(needle.length());
+            start = end + 1;
+            if (start >= url.length()) break;
+        }
+        return null;
     }
 
     private static String esc(String s) {
