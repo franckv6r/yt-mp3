@@ -4,6 +4,11 @@ import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.CancellationException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 
 object Http {
 
@@ -75,6 +80,112 @@ object Http {
 
     private fun FileOutputStreamCompat(file: File, append: Boolean) =
         java.io.FileOutputStream(file, append)
+
+    /**
+     * Telecharge en 6 morceaux paralleles quand le serveur accepte Range.
+     * Retombe sur le telechargement simple sinon.
+     */
+    fun downloadParallel(
+        url: String,
+        dest: File,
+        parts: Int = 6,
+        shouldStop: () -> Boolean = { false },
+        onProgress: (Long) -> Unit = {}
+    ) {
+        val headers = mapOf("Accept-Encoding" to "identity")
+        val total = try {
+            val head = open(url, headers).apply { requestMethod = "HEAD" }
+            try {
+                if (head.responseCode >= 400) 0L else head.contentLengthLong
+            } finally {
+                head.disconnect()
+            }
+        } catch (_: Exception) {
+            0L
+        }
+        if (parts < 2 || total < 1_000_000L || shouldStop()) {
+            download(url, dest, onProgress = onProgress)
+            return
+        }
+
+        val chunk = (total + parts - 1) / parts
+        dest.delete()
+        val work = File(dest.parentFile, dest.name + ".parts").apply {
+            deleteRecursively(); mkdirs()
+        }
+        val done = AtomicLong(0L)
+        val failure = AtomicReference<Throwable?>()
+        val pool = Executors.newFixedThreadPool(parts)
+        val latch = CountDownLatch(parts)
+        try {
+            for (i in 0 until parts) {
+                val start = i * chunk
+                val end = minOf(total - 1, start + chunk - 1)
+                if (start > end) break
+                pool.execute {
+                    val part = File(work, "part$i")
+                    try {
+                        if (shouldStop()) throw CancellationException("arrêt")
+                        val c = open(
+                            url,
+                            headers + mapOf("Range" to "bytes=$start-$end")
+                        )
+                        try {
+                            if (c.responseCode != 206) {
+                                throw IOException("Range non supporte (HTTP ${c.responseCode})")
+                            }
+                            c.inputStream.use { input ->
+                                part.outputStream().use { out ->
+                                    val buf = ByteArray(64 * 1024)
+                                    var n: Int
+                                    while (input.read(buf).also { n = it } > 0) {
+                                        if (shouldStop()) throw CancellationException("arrêt")
+                                        out.write(buf, 0, n)
+                                        val current = done.addAndGet(n.toLong())
+                                        onProgress(current * 100 / total)
+                                    }
+                                }
+                            }
+                            val expected = end - start + 1
+                            if (part.length() != expected) {
+                                throw IOException("morceau incomplet (${part.length()}/$expected)")
+                            }
+                        } finally {
+                            c.disconnect()
+                        }
+                    } catch (t: Throwable) {
+                        failure.compareAndSet(null, t)
+                    } finally {
+                        latch.countDown()
+                    }
+                }
+            }
+            latch.await()
+        } finally {
+            pool.shutdownNow()
+        }
+        val error = failure.get()
+        if (error != null) {
+            work.deleteRecursively()
+            if (error is CancellationException) throw error
+            throw if (error is IOException) error else IOException(error)
+        }
+        try {
+            dest.outputStream().use { out ->
+                for (i in 0 until parts) {
+                    val part = File(work, "part$i")
+                    if (!part.exists()) continue
+                    part.inputStream().use { it.copyTo(out) }
+                }
+            }
+            if (dest.length() != total) {
+                throw IOException("taille finale ${dest.length()}/$total")
+            }
+            onProgress(100)
+        } finally {
+            work.deleteRecursively()
+        }
+    }
 
     private fun open(
         url: String,

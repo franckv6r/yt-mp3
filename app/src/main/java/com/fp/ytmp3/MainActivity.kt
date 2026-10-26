@@ -1021,7 +1021,10 @@ class MainActivity : AppCompatActivity() {
             try {
                 withContext(Dispatchers.IO) {
                     var lastShown = -2
-                    Http.download(audioUrl, src, append = attempt > 0) { pct ->
+                    Http.downloadParallel(
+                        audioUrl, src, parts = 6,
+                        shouldStop = { stopRequested }
+                    ) { pct ->
                         if (stopRequested) throw CancellationException("arrêt")
                         val p = pct.toInt()
                         if (p < 0) {

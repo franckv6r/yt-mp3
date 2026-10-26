@@ -132,3 +132,9 @@
 - Fix : 3 tentatives, reprise HTTP `Range` sur le fichier partiel, rafraichissement de l'URL audio via `ExtractorApi.info`, pause de 1,2 s ; logs `reprise telechargement`.
 - Non-regression : build + 28 tests ; la conversion d'une piste sans coupure reste OK.
 - Occurrences : 1.
+
+## 2026-10-26 — Debit Googlevideo : telechargement en 6 tranches
+- Constat : une piste audio `audio/webm` de 4,05 Mo mettait ~114 s (~35 Ko/s) sur une connexion unique, alors qu'elle ne contient pas de video.
+- Fix : `Http.downloadParallel()` decoupe le fichier en 6 requetes `Range` paralleles, verifie la taille de chaque morceau et reassemble ; repli sur le telechargement simple si le serveur refuse les ranges.
+- Non-regression : build + 28 tests ; release v0.4.9.
+- Occurrences : 1.
