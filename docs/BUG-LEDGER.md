@@ -138,3 +138,10 @@
 - Fix : `Http.downloadParallel()` decoupe le fichier en 6 requetes `Range` paralleles, verifie la taille de chaque morceau et reassemble ; repli sur le telechargement simple si le serveur refuse les ranges.
 - Non-regression : build + 28 tests ; release v0.4.9.
 - Occurrences : 1.
+
+## 2026-10-26 — Journal trop verbeux sur les pourcentages
+- Symptome : des milliers de lignes `téléchargement 10 %` / `conversion mp3 20 %` identiques.
+- Cause : le callback de progression est appele plusieurs fois par pourcentage ; le log etait ecrit a chaque appel.
+- Fix : memorisation du dernier pourcentage journalise, cote telechargement (atomique) et conversion ; seuls les paliers de 10 % sont ecrits une fois.
+- Non-regression : build + 28 tests ; nouveau log limite aux etapes utiles.
+- Occurrences : 1.
