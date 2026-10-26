@@ -32,20 +32,39 @@ object Http {
         readMs: Int = 60000
     ): String = String(bytes(url, headers, connectMs, readMs), Charsets.UTF_8)
 
-    fun download(url: String, dest: File, onProgress: (Long) -> Unit = {}) {
-        val c = open(url, emptyMap())
+    /**
+     * Telechargement avec reprise. `append=true` demande a YouTube la suite
+     * du fichier ; si le serveur renvoie 200, on repart de zero.
+     */
+    fun download(
+        url: String,
+        dest: File,
+        append: Boolean = false,
+        onProgress: (Long) -> Unit = {}
+    ) {
+        val existing = if (append && dest.exists()) dest.length() else 0L
+        val headers = linkedMapOf("Accept-Encoding" to "identity")
+        if (existing > 0) headers["Range"] = "bytes=$existing-"
+        val c = open(url, headers)
         try {
-            if (c.responseCode >= 400) throw IOException("HTTP ${c.responseCode}")
+            val code = c.responseCode
+            if (code >= 400) throw IOException("HTTP $code")
+            val resumed = code == 206 && existing > 0
+            val base = if (resumed) existing else 0L
             val total = c.contentLengthLong
             c.inputStream.use { input ->
-                dest.outputStream().use { out ->
+                FileOutputStreamCompat(dest, resumed).use { out ->
                     val buf = ByteArray(64 * 1024)
                     var done = 0L
                     var n: Int
                     while (input.read(buf).also { n = it } > 0) {
                         out.write(buf, 0, n)
                         done += n
-                        if (total > 0) onProgress(done * 100 / total) else onProgress(-1)
+                        if (total > 0) {
+                            onProgress((base + done) * 100 / (base + total))
+                        } else {
+                            onProgress(-1)
+                        }
                     }
                 }
             }
@@ -53,6 +72,9 @@ object Http {
             c.disconnect()
         }
     }
+
+    private fun FileOutputStreamCompat(file: File, append: Boolean) =
+        java.io.FileOutputStream(file, append)
 
     private fun open(
         url: String,

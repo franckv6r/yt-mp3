@@ -125,3 +125,10 @@
 - Fix : NewPipe Extractor est compile directement dans l'APK via `:plugin` ; suppression de `PluginLoader`, de l'asset `extractor.dex`, du script de dex et de l'ancien updater d'extracteur. Cleartext HTTP et backup desactives.
 - Non-regression : APK sans `extractor.dex`, classes `ExtractorApi` incluses, 28 tests, release APK via CI. Play Protect peut encore avertir : l'appli reste hors Play Store.
 - Occurrences : 1.
+
+## 2026-10-26 — Telechargement : SocketException Connection reset
+- Symptome : certaines pistes d'une playlist echouent avec `echec : SocketException: Connection reset` ; ce n'est pas la conversion MP3.
+- Cause : YouTube/Googlevideo coupe la connexion audio ; `Http.download` n'avait ni reprise ni nouvelle tentative.
+- Fix : 3 tentatives, reprise HTTP `Range` sur le fichier partiel, rafraichissement de l'URL audio via `ExtractorApi.info`, pause de 1,2 s ; logs `reprise telechargement`.
+- Non-regression : build + 28 tests ; la conversion d'une piste sans coupure reste OK.
+- Occurrences : 1.

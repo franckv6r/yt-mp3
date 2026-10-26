@@ -35,6 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -1004,7 +1005,7 @@ class MainActivity : AppCompatActivity() {
 
     private suspend fun downloadOne(webUrl: String): String {
         val info = withContext(Dispatchers.IO) { JSONObject(ExtractorApi.info(webUrl)) }
-        val audioUrl = info.getString("url")
+        var audioUrl = info.getString("url")
         val title = info.optString("title")
         val uploader = info.optString("uploader")
         val duration = info.optLong("duration")
@@ -1015,26 +1016,49 @@ class MainActivity : AppCompatActivity() {
         setCurrent(getString(R.string.main_downloading_fmt, title))
         Notify.update(this@MainActivity, getString(R.string.notif_download), title, 0, false)
         log("  " + getString(R.string.log_download_step))
-        withContext(Dispatchers.IO) {
-            var lastShown = -2
-            Http.download(audioUrl, src) { pct ->
-                if (stopRequested) throw CancellationException("arrêt")
-                val p = pct.toInt()
-                if (p < 0) {
-                    if (lastShown != -2) {
-                        lastShown = -2
-                        setCurrent(getString(R.string.main_downloading_fmt, title))
-                        Notify.update(
-                            this@MainActivity, getString(R.string.notif_download),
-                            title, -1, true
-                        )
+        var attempt = 0
+        while (true) {
+            try {
+                withContext(Dispatchers.IO) {
+                    var lastShown = -2
+                    Http.download(audioUrl, src, append = attempt > 0) { pct ->
+                        if (stopRequested) throw CancellationException("arrêt")
+                        val p = pct.toInt()
+                        if (p < 0) {
+                            if (lastShown != -2) {
+                                lastShown = -2
+                                setCurrent(getString(R.string.main_downloading_fmt, title))
+                                Notify.update(
+                                    this@MainActivity, getString(R.string.notif_download),
+                                    title, -1, true
+                                )
+                            }
+                        } else if (p != lastShown) {
+                            lastShown = p
+                            setCurrent(getString(R.string.main_download_pct_fmt, p, title))
+                            Notify.update(
+                                this@MainActivity, getString(R.string.notif_download),
+                                title, p, false
+                            )
+                        }
+                        if (p in 1..100 && p % 10 == 0) {
+                            log("    " + getString(R.string.log_download_step) + " $p %")
+                        }
                     }
-                } else if (p != lastShown) {
-                    lastShown = p
-                    setCurrent(getString(R.string.main_download_pct_fmt, p, title))
-                    Notify.update(this@MainActivity, getString(R.string.notif_download), title, p, false)
                 }
-                if (p in 1..100 && p % 10 == 0) log("    " + getString(R.string.log_download_step) + " $p %")
+                break
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                if (attempt >= 2) throw e
+                attempt++
+                log("  reprise téléchargement ($attempt/2) : ${e.javaClass.simpleName}")
+                delay(1200)
+                audioUrl = withContext(Dispatchers.IO) {
+                    runCatching {
+                        JSONObject(ExtractorApi.info(webUrl)).getString("url")
+                    }.getOrElse { audioUrl }
+                }
             }
         }
 
