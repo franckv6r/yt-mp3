@@ -1020,6 +1020,7 @@ class MainActivity : AppCompatActivity() {
         while (true) {
             try {
                 withContext(Dispatchers.IO) {
+                    val lock = Any()
                     var lastShown = -2
                     Http.downloadParallel(
                         audioUrl, src, parts = 6,
@@ -1027,22 +1028,24 @@ class MainActivity : AppCompatActivity() {
                     ) { pct ->
                         if (stopRequested) throw CancellationException("arrêt")
                         val p = pct.toInt()
-                        if (p < 0) {
-                            if (lastShown != -2) {
-                                lastShown = -2
-                                setCurrent(getString(R.string.main_downloading_fmt, title))
+                        synchronized(lock) {
+                            if (p < 0) {
+                                if (lastShown != -2) {
+                                    lastShown = -2
+                                    setCurrent(getString(R.string.main_downloading_fmt, title))
+                                    Notify.update(
+                                        this@MainActivity, getString(R.string.notif_download),
+                                        title, -1, true
+                                    )
+                                }
+                            } else if (p > lastShown) {
+                                lastShown = p
+                                setCurrent(getString(R.string.main_download_pct_fmt, p, title))
                                 Notify.update(
                                     this@MainActivity, getString(R.string.notif_download),
-                                    title, -1, true
+                                    title, p, false
                                 )
                             }
-                        } else if (p != lastShown) {
-                            lastShown = p
-                            setCurrent(getString(R.string.main_download_pct_fmt, p, title))
-                            Notify.update(
-                                this@MainActivity, getString(R.string.notif_download),
-                                title, p, false
-                            )
                         }
                     }
                 }
@@ -1070,12 +1073,15 @@ class MainActivity : AppCompatActivity() {
         )
         log("  " + getString(R.string.log_convert_step) + " ...")
         withContext(Dispatchers.IO) {
+            val lock = Any()
             var lastShown = -1
             AudioConverter.toMp3(src, mp3, shouldStop = { stopRequested }) { pct ->
-                if (pct != lastShown) {
-                    lastShown = pct
-                    setCurrent(getString(R.string.main_convert_pct_fmt, pct, title))
-                    Notify.update(this@MainActivity, getString(R.string.notif_download), title, pct, false)
+                synchronized(lock) {
+                    if (pct > lastShown) {
+                        lastShown = pct
+                        setCurrent(getString(R.string.main_convert_pct_fmt, pct, title))
+                        Notify.update(this@MainActivity, getString(R.string.notif_download), title, pct, false)
+                    }
                 }
             }
         }

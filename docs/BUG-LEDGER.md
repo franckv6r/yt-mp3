@@ -157,3 +157,10 @@
 - Le pipeline appelle `onProgress` depuis le decodeur et l'encodeur en parallele ; la deduplication precedente n'etait pas atomique.
 - Fix : suppression complete des lignes de pourcentage dans le journal ; la barre et la notification gardent la progression. Le journal ne garde que debut/etapes/fin.
 - Non-regression : conversion Nancy Sinatra valide (3,65 Mo, 149 s, APIC + USLT) ; build + 28 tests.
+
+## 2026-10-26 — Deux pourcentages en parallele pendant la conversion
+- Symptome : l'interface alternait tres vite entre le pourcentage LAME et un pourcentage de decodage plus bas.
+- Cause : le pipeline appelle `onProgress` depuis deux threads ; la garde `lastShown` n'etait pas atomique et les mises a jour UI pouvaient etre postees dans le desordre.
+- Fix : section critique commune autour de la comparaison et de l'affichage (conversion + telechargement 6 threads) ; seul un pourcentage strictement croissant est affiche.
+- Non-regression : build + 28 tests.
+- Occurrences : 1.
