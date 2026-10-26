@@ -1,4 +1,4 @@
-# yt-mp3 — application Android (v0.4.10)
+# yt-mp3 — application Android (v0.4.11)
 
 Télécharge une **vidéo ou une playlist** YouTube, convertit en **MP3**, tague
 (titre / artiste / année / album via MusicBrainz), ajoute **pochette** et
@@ -49,7 +49,7 @@ Pour le développement :
 ## Mises à jour de l'application
 
 Au lancement, l'application affiche sa version dans le header
-(`YouTube → MP3 · v0.4.10`) et interroge
+(`YouTube → MP3 · v0.4.11`) et interroge
 `https://api.github.com/repos/franckv6r/yt-mp3/releases/latest`.
 
 Si le tag de la dernière release est plus récent que la version installée, un

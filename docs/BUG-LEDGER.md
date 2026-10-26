@@ -145,3 +145,10 @@
 - Fix : memorisation du dernier pourcentage journalise, cote telechargement (atomique) et conversion ; seuls les paliers de 10 % sont ecrits une fois.
 - Non-regression : build + 28 tests ; nouveau log limite aux etapes utiles.
 - Occurrences : 1.
+
+## 2026-10-26 — Conversion MP3 : pipeline decode/encode
+- Objectif : reduire le temps de conversion sans changer le format ni les tags.
+- Avant : toute la piste etait decodee en PCM en memoire, puis encodee par LAME.
+- Fix : MediaCodec decode et LAME encode en pipeline via une file bornee de 8 blocs ; LAME tourne sur un thread dedie, la memoire PCM n'est plus stockee en entier, progression decode 0-50 % / encode 50-100 %.
+- Non-regression : build + 28 tests ; a verifier sur un fichier reel (sortie MP3 lisible).
+- Occurrences : 1.
