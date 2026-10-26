@@ -84,7 +84,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ inputs.tag }}
         run: |
-          gh release create "$TAG" \
-            "app/build/outputs/apk/release/app-release.apk#yt-mp3.apk" \
+          APK="yt-mp3_${TAG}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "$APK"
+          gh release create "$TAG" "$APK" \
             --title "yt-mp3 $TAG" \
             --generate-notes
