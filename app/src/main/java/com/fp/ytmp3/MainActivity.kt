@@ -43,7 +43,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.CancellationException
-import java.util.concurrent.atomic.AtomicInteger
 
 enum class ArtMode(val labelRes: Int) {
     COVER(R.string.main_art_covers_short),
@@ -1022,7 +1021,6 @@ class MainActivity : AppCompatActivity() {
             try {
                 withContext(Dispatchers.IO) {
                     var lastShown = -2
-                    val lastLogged = AtomicInteger(-1)
                     Http.downloadParallel(
                         audioUrl, src, parts = 6,
                         shouldStop = { stopRequested }
@@ -1045,9 +1043,6 @@ class MainActivity : AppCompatActivity() {
                                 this@MainActivity, getString(R.string.notif_download),
                                 title, p, false
                             )
-                        }
-                        if (p in 1..100 && p % 10 == 0 && lastLogged.getAndSet(p) != p) {
-                            log("    " + getString(R.string.log_download_step) + " $p %")
                         }
                     }
                 }
@@ -1076,16 +1071,11 @@ class MainActivity : AppCompatActivity() {
         log("  " + getString(R.string.log_convert_step) + " ...")
         withContext(Dispatchers.IO) {
             var lastShown = -1
-            var lastLogged = -1
             AudioConverter.toMp3(src, mp3, shouldStop = { stopRequested }) { pct ->
                 if (pct != lastShown) {
                     lastShown = pct
                     setCurrent(getString(R.string.main_convert_pct_fmt, pct, title))
                     Notify.update(this@MainActivity, getString(R.string.notif_download), title, pct, false)
-                }
-                if (pct % 10 == 0 && pct != lastLogged) {
-                    lastLogged = pct
-                    log("    " + getString(R.string.log_convert_step) + " $pct %")
                 }
             }
         }

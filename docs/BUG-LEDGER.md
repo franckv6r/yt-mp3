@@ -152,3 +152,8 @@
 - Fix : MediaCodec decode et LAME encode en pipeline via une file bornee de 8 blocs ; LAME tourne sur un thread dedie, la memoire PCM n'est plus stockee en entier, progression decode 0-50 % / encode 50-100 %.
 - Non-regression : build + 28 tests ; a verifier sur un fichier reel (sortie MP3 lisible).
 - Occurrences : 1.
+
+## 2026-10-26 — Pourcentages retires du journal
+- Le pipeline appelle `onProgress` depuis le decodeur et l'encodeur en parallele ; la deduplication precedente n'etait pas atomique.
+- Fix : suppression complete des lignes de pourcentage dans le journal ; la barre et la notification gardent la progression. Le journal ne garde que debut/etapes/fin.
+- Non-regression : conversion Nancy Sinatra valide (3,65 Mo, 149 s, APIC + USLT) ; build + 28 tests.
