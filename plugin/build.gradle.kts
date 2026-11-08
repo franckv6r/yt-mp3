@@ -8,7 +8,7 @@ java {
 }
 
 dependencies {
-    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.26.5")
+    implementation("com.github.TeamNewPipe:NewPipeExtractor:v0.27.0")
 }
 
 tasks.register<Jar>("fatJar") {
